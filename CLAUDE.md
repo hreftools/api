@@ -36,32 +36,68 @@ air
 
 ### Running the server (manual)
 ```bash
-go run main.go
+go run cmd/api/main.go
+```
+
+### Using Makefile (recommended)
+```bash
+make build  # Build the binary
+make run    # Build and run (production-like)
+make dev    # Development with live reload
+make test   # Run tests
+make clean  # Clean build artifacts
 ```
 
 The server starts on port 8080 with these configured timeouts:
 - ReadTimeout: 10s
+- ReadHeaderTimeout: 5s
 - WriteTimeout: 10s
-- MaxHeaderBytes: 1MB
+- IdleTimeout: 120s
 
-### Building
-```bash
-go build -o api main.go
+## Project Structure
+
 ```
-
-### Testing
-```bash
-go test ./...
+api/
+├── cmd/
+│   └── api/
+│       └── main.go          # Entry point - wires everything together
+├── internal/
+│   ├── handlers/
+│   │   └── status.go        # HTTP handlers (one per resource)
+│   ├── middleware/
+│   │   └── common.go        # Middleware (security headers, CORS, etc.)
+│   └── models/
+│       └── response.go      # Shared structs (requests/responses)
+├── go.mod
+├── Makefile
+└── CLAUDE.md
 ```
 
 ## Architecture
 
-**Single-file architecture**: The entire API is currently in `main.go` with:
-- HTTP server setup using `http.Server` with explicit timeouts
-- Route-based handlers using `http.ServeMux` with method prefixes (e.g., `GET /status`)
-- Standard response structs: `ResponseSuccess` and `ResponseError` for consistent JSON responses
+**Standard Go project layout**: Following Go community conventions:
+- `cmd/api/` - Application entry point, minimal logic
+- `internal/` - Private packages (can't be imported by external projects)
+- `internal/handlers/` - HTTP handler functions (easy to test)
+- `internal/middleware/` - Reusable middleware (headers, auth, logging)
+- `internal/models/` - Shared data structures
 
-**Response structure**: All JSON responses follow a structured format with `status` field and either `data` (success) or `error` (failure) fields.
+**HTTP Server Setup**:
+- Uses `http.Server` with explicit timeouts for security
+- Route-based handlers using `http.ServeMux` with method prefixes (e.g., `GET /status`)
+- Middleware chain applies common headers (security, CORS, Content-Type)
+
+**Response Structure**: All JSON responses follow a structured format:
+- Success: `{"status": "success", "data": "..."}`
+- Error: `{"status": "error", "error": "..."}`
+
+**Security Headers**: All responses include:
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: DENY`
+- `X-XSS-Protection: 1; mode=block`
+- `Content-Security-Policy: default-src 'self'`
+
+**CORS**: Configured for open/public API with `Access-Control-Allow-Origin: *`
 
 ## API Endpoints
 
