@@ -3,7 +3,7 @@ BINARY_NAME=api
 
 # Build the application
 build:
-	go build -o ${BINARY_NAME} cmd/api/main.go
+	PORT=3000 go build -o ${BINARY_NAME} cmd/api/main.go
 
 # Run the built binary (production-like)
 run: build
