@@ -29,6 +29,7 @@ test-coverage:
 # Install development tools
 install-tools:
 	go install github.com/air-verse/air@latest
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 # Default target (what runs when you just type 'make')
 .PHONY: build run dev clean test test-coverage install-tools

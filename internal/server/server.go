@@ -15,15 +15,24 @@ func New() *http.Server {
 		port = "8080"
 	}
 
+	// routes
 	mux := http.NewServeMux()
-
 	mux.HandleFunc("GET /status", handlers.Status)
+	mux.HandleFunc("GET /resources", handlers.ResourcesGet)
 
-	handler := middlewares.CommonHeaders(mux)
+	// version api
+	v1 := http.NewServeMux()
+	v1.Handle("/v1/", http.StripPrefix("/v1", mux))
+
+	// apply middlewares
+	middlewaresStack := middlewares.MiddlewareStac(
+		middlewares.Logging,
+		middlewares.CommonHeaders,
+	)
 
 	return &http.Server{
 		Addr:              ":" + port,
-		Handler:           handler,
+		Handler:           middlewaresStack(v1),
 		ReadTimeout:       10 * time.Second,
 		ReadHeaderTimeout: 5 * time.Second,
 		WriteTimeout:      10 * time.Second,
