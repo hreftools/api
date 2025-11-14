@@ -31,5 +31,9 @@ install-tools:
 	go install github.com/air-verse/air@latest
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
+# Generate code from SQL schema and queries
+gen:
+	sqlc generate
+
 # Default target (what runs when you just type 'make')
-.PHONY: build run dev clean test test-coverage install-tools
+.PHONY: build run dev clean test test-coverage install-tools gen
