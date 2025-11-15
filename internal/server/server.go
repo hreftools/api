@@ -1,14 +1,16 @@
 package server
 
 import (
-	"github.com/zapi-sh/api/internal/handlers"
-	"github.com/zapi-sh/api/internal/middlewares"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/zapi-sh/api/internal/handlers"
+	"github.com/zapi-sh/api/internal/middlewares"
+	"github.com/zapi-sh/api/internal/store"
 )
 
-func New() *http.Server {
+func New(store *store.Store) *http.Server {
 	port := os.Getenv("PORT")
 
 	if port == "" {
@@ -18,7 +20,10 @@ func New() *http.Server {
 	// routes
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /status", handlers.Status)
-	mux.HandleFunc("GET /resources", handlers.ResourcesGet)
+	mux.HandleFunc("GET /resources", handlers.ResourcesGet(store))
+	// mux.HandleFunc("GET /resources/{{id}}", handlers.ResourcesGet(store))
+	mux.HandleFunc("POST /resources", handlers.ResourcesCreate(store))
+	mux.HandleFunc("DELETE /resources/{{id}}", handlers.ResourcesDelete(store))
 
 	// version api
 	v1 := http.NewServeMux()

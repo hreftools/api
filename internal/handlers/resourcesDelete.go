@@ -8,14 +8,14 @@ import (
 	"github.com/zapi-sh/api/internal/store"
 )
 
-type ResourcesGetResponse struct {
+ResourceDeleteResponse struct {
 	Status string        `json:"status"`
-	Data   []db.Resource `json:"data"`
+	Data   db.Resource `json:"data"`
 }
 
-func ResourcesGet(store *store.Store) http.HandlerFunc {
+func ResourcesDelete(store *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		list, err := store.Resources.List(r.Context())
+		list, err := store.Resources(r.Context())
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

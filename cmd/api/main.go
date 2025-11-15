@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 	"net/http"
@@ -9,11 +10,32 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/zapi-sh/api/internal/server"
+	"github.com/zapi-sh/api/internal/store"
 )
 
 func main() {
-	s := server.New()
+	dbConnection, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable")
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer dbConnection.Close()
+
+	// configure db pool
+	dbConnection.SetMaxOpenConns(25)
+	dbConnection.SetMaxIdleConns(5)
+	dbConnection.SetConnMaxLifetime(5 * time.Minute)
+	dbConnection.SetConnMaxIdleTime(5 * time.Minute)
+
+	// verigy db connectoin
+	if err := dbConnection.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+
+	store := store.NewStore(dbConnection)
+
+	s := server.New(store)
 
 	go func() {
 		log.Printf("Starting server on %s", s.Addr)
