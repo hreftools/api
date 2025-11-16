@@ -16,28 +16,28 @@ import (
 )
 
 func main() {
-	dbConnection, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable")
+	pool, err := sql.Open("pgx", "postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 	defer func() {
-		if err := dbConnection.Close(); err != nil {
+		if err := pool.Close(); err != nil {
 			log.Printf("Failed to close database connection: %v", err)
 		}
 	}()
 
-	// configure db pool
-	dbConnection.SetMaxOpenConns(25)
-	dbConnection.SetMaxIdleConns(5)
-	dbConnection.SetConnMaxLifetime(5 * time.Minute)
-	dbConnection.SetConnMaxIdleTime(5 * time.Minute)
+	// configure db connection pool
+	pool.SetMaxOpenConns(25)
+	pool.SetMaxIdleConns(5)
+	pool.SetConnMaxLifetime(5 * time.Minute)
+	pool.SetConnMaxIdleTime(5 * time.Minute)
 
-	// verigy db connectoin
-	if err := dbConnection.Ping(); err != nil {
+	// verify the db connectoin
+	if err := pool.Ping(); err != nil {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	store := store.NewStore(dbConnection)
+	store := store.NewStore(pool)
 
 	s := server.New(store)
 

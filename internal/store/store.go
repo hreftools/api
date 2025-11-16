@@ -10,8 +10,8 @@ type Store struct {
 	Resources ResourceStore
 }
 
-func NewStore(connectoin *sql.DB) *Store {
-	queries := db.New(connectoin)
+func NewStore(pool *sql.DB) *Store {
+	queries := db.New(pool)
 
 	return &Store{
 		Resources: NewResourceStore(queries),
