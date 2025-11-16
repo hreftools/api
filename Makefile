@@ -48,5 +48,10 @@ lint:
 format:
 	golangci-lint fmt ./...
 
+# you run this thig like that
+# make migration name=create_users_table
+migration:
+	migrate create -dir ./sql/migrations -ext sql -seq $(name)
+
 # Default target (what runs when you just type 'make')
 .PHONY: build run dev clean test test-coverage install-tools gen
