@@ -32,6 +32,7 @@ func ResourcesUpdate(store *store.Store) http.HandlerFunc {
 			http.Error(w, "invalid id parameter", http.StatusBadRequest)
 			return
 		}
+
 		var body ResourceUpdateBody
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			log.Printf("Error decoding request body: %v", err)
@@ -40,12 +41,11 @@ func ResourcesUpdate(store *store.Store) http.HandlerFunc {
 		}
 
 		rr, err := store.Resources.Update(r.Context(), idUuid, body.Title, body.Description, body.URL, body.Favourite, body.ReadLater)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if HandleError(w, err) {
 			return
 		}
 
-		response := &ResourceCreateResponse{
+		response := &ResourceUpdateResponse{
 			Status: "ok",
 			Data:   rr,
 		}

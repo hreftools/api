@@ -16,8 +16,7 @@ type ResourcesListResponse struct {
 func ResourcesList(store *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		list, err := store.Resources.List(r.Context())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if HandleError(w, err) {
 			return
 		}
 

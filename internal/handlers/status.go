@@ -11,7 +11,7 @@ func Status(w http.ResponseWriter, r *http.Request) {
 
 	response := models.ResponseSuccess{
 		Status: "success",
-		Data:   "Service is running",
+		Data:   "service is running",
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
