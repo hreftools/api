@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/zapi-sh/api/internal/db"
+	"github.com/zapi-sh/api/internal/response"
 	"github.com/zapi-sh/api/internal/store"
 )
 
@@ -17,7 +18,7 @@ func ResourcesList(store *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		list, err := store.Resources.List(r.Context())
 		if err != nil {
-			HandleDbError(w, err)
+			response.HandleDbError(w, err)
 			return
 		}
 

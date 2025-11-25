@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/zapi-sh/api/internal/db"
+	"github.com/zapi-sh/api/internal/response"
 	"github.com/zapi-sh/api/internal/store"
 )
 
@@ -28,19 +29,19 @@ func ResourcesUpdate(store *store.Store) http.HandlerFunc {
 		id := r.PathValue("id")
 		idUuid, err := uuid.Parse(id)
 		if err != nil {
-			HandleClientError(w, err, "invalid id parameter")
+			response.HandleClientError(w, err, "invalid id parameter")
 			return
 		}
 
 		var body ResourceUpdateBody
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			HandleClientError(w, err, "invalid request body")
+			response.HandleClientError(w, err, "invalid request body")
 			return
 		}
 
 		rr, err := store.Resources.Update(r.Context(), idUuid, body.Title, body.Description, body.URL, body.Favourite, body.ReadLater)
 		if err != nil {
-			HandleDbError(w, err)
+			response.HandleDbError(w, err)
 			return
 		}
 

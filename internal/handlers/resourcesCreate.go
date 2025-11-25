@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/zapi-sh/api/internal/db"
+	"github.com/zapi-sh/api/internal/response"
 	"github.com/zapi-sh/api/internal/store"
 )
 
@@ -25,13 +26,13 @@ func ResourcesCreate(store *store.Store) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var body ResourceCreateBody
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			HandleClientError(w, err, "invalid request body")
+			response.HandleClientError(w, err, "invalid request body")
 			return
 		}
 
 		rr, err := store.Resources.Create(r.Context(), body.Title, body.Description, body.URL, body.Favourite, body.ReadLater)
 		if err != nil {
-			HandleDbError(w, err)
+			response.HandleDbError(w, err)
 			return
 		}
 
