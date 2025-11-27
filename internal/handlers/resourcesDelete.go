@@ -36,7 +36,7 @@ func ResourcesDelete(store *store.Store) http.HandlerFunc {
 			return
 		}
 
-		response := &ResourcesGetResponse{
+		response := &ResourceDeleteResponse{
 			Status: "ok",
 			Data:   rr,
 		}
