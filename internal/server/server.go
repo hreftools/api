@@ -36,7 +36,7 @@ func New(store *store.Store) *http.Server {
 	v1.Handle("/v1/", http.StripPrefix("/v1", mux))
 
 	// apply middlewares
-	middlewaresStack := middlewares.MiddlewareStac(
+	middlewaresStack := middlewares.MiddlewareStack(
 		middlewares.Logging,
 		middlewares.CommonHeaders,
 	)
