@@ -14,19 +14,19 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/zapi-sh/api/internal/server"
 	"github.com/zapi-sh/api/internal/store"
-
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
-)
-
-const (
-	// TODO: this this should come from env
-	databaseUrl    = "postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable"
-	pathMigrations = "file://sql/migrations"
 )
 
 func run(ctx context.Context) error {
+	port := os.Getenv("PORT")
+	databaseUrl := os.Getenv("DATABASE_URL")
+
+	if port == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+	if databaseUrl == "" {
+		log.Fatal("DATABASE_URL environment variable is required")
+	}
+
 	pool, err := sql.Open("pgx", databaseUrl)
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
@@ -48,21 +48,13 @@ func run(ctx context.Context) error {
 		log.Fatalf("Failed to ping database: %v", err)
 	}
 
-	m, err := migrate.New(pathMigrations, databaseUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	if err := m.Up(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
-		log.Fatal(err)
-	}
-
 	store := store.NewStore(pool)
 
 	srv := server.New(store)
 
 	chServer := make(chan error, 1)
 
-	log.Println("Starting server on :8080")
+	log.Printf("Starting server on %s", port)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			chServer <- err

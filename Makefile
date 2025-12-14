@@ -1,9 +1,11 @@
-# Binary name
 BINARY_NAME=api
 
+.SILENT:
+
 # Build the application
+# make build port=3000 db_url=postgres://user:password@localhost:5432/dbname
 build:
-	PORT=3000 go build -o ${BINARY_NAME} cmd/api/main.go
+	PORT=$(port) DATABASE_URL=$(db_url) go build -o ${BINARY_NAME} cmd/api/main.go
 
 # Run the built binary (production-like)
 run: build
@@ -36,6 +38,19 @@ install-tools:
 gen:
 	sqlc generate
 
+# you run this thig like that
+# make migration name=create_users_table
+migrate-create:
+	migrate create -dir ./sql/migrations -ext sql -seq $(name)
+
+# make migrate-up db_url=postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable
+migrate-up:
+	migrate -path ./sql/migrations -database $(db_url) up
+
+# make migrate-down db_url=postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable
+migrate-down:
+	migrate -path ./sql/migrations -database $(db_url) down
+
 docker-up:
 	docker compose up -d
 
@@ -51,19 +66,5 @@ lint:
 format:
 	golangci-lint fmt ./...
 
-# you run this thig like that
-# make migration name=create_users_table
-migration:
-	migrate create -dir ./sql/migrations -ext sql -seq $(name)
-
-migration-up:
-	migrate -path ./sql/migrations -database $(db_url) up
-
-migration-down:
-	migrate -path ./sql/migrations -database $(db_url) down
-
-migration-create:
-	migrate create -dir ./sql/migrations -ext sql -seq $(name)
-
 # Default target (what runs when you just type 'make')
-.PHONY: build run dev clean test test-coverage install-tools gen
+.PHONY: build run dev clean test test-coverage install-tools gen docker-up docker-down docker-down-v lint format migration-create migration-up migration-down
