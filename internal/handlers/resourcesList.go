@@ -22,12 +22,9 @@ func ResourcesList(store *store.Store) http.HandlerFunc {
 			return
 		}
 
-		s := make([]db.Resource, 0, len(list))
-		s = append(s, list...)
-
 		response := &ResourcesListResponse{
 			Status: "ok",
-			Data:   s,
+			Data:   list,
 		}
 
 		if err := json.NewEncoder(w).Encode(response); err != nil {
