@@ -30,6 +30,9 @@ func New(store *store.Store) *http.Server {
 	mux.HandleFunc("POST /resources", handlers.ResourcesCreate(store))
 	mux.HandleFunc("PUT /resources/{id}", handlers.ResourcesUpdate(store))
 	mux.HandleFunc("DELETE /resources/{id}", handlers.ResourcesDelete(store))
+	// users
+	mux.HandleFunc("GET /users", handlers.UsersList(store))
+	mux.HandleFunc("POST /users", handlers.UserCreate(store))
 
 	// version api
 	v1 := http.NewServeMux()

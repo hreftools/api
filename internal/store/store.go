@@ -8,6 +8,7 @@ import (
 
 type Store struct {
 	Resources ResourceStore
+	Users     UserStore
 }
 
 func NewStore(pool *sql.DB) *Store {
@@ -15,5 +16,6 @@ func NewStore(pool *sql.DB) *Store {
 
 	return &Store{
 		Resources: NewResourceStore(queries),
+		Users:     NewUserStore(queries),
 	}
 }

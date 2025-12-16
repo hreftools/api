@@ -30,6 +30,8 @@ type User struct {
 	EmailVerificationTokenExpiresAt sql.NullTime   `json:"emailVerificationTokenExpiresAt"`
 	Password                        string         `json:"password"`
 	Username                        string         `json:"username"`
+	IsAdmin                         bool           `json:"isAdmin"`
+	IsPro                           bool           `json:"isPro"`
 	CreatedAt                       time.Time      `json:"createdAt"`
 	UpdatedAt                       time.Time      `json:"updatedAt"`
 }

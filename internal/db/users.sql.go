@@ -17,7 +17,7 @@ email, username, password
 ) VALUES (
   $1, $2, $3
 )
-RETURNING id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, created_at, updated_at
+RETURNING id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -37,6 +37,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.EmailVerificationTokenExpiresAt,
 		&i.Password,
 		&i.Username,
+		&i.IsAdmin,
+		&i.IsPro,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -54,7 +56,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, created_at, updated_at FROM users
+SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at FROM users
 WHERE id =
 $1 LIMIT 1
 `
@@ -70,6 +72,8 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.EmailVerificationTokenExpiresAt,
 		&i.Password,
 		&i.Username,
+		&i.IsAdmin,
+		&i.IsPro,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -77,7 +81,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, created_at, updated_at FROM users
+SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at FROM users
 ORDER BY created_at
 `
 
@@ -98,6 +102,8 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 			&i.EmailVerificationTokenExpiresAt,
 			&i.Password,
 			&i.Username,
+			&i.IsAdmin,
+			&i.IsPro,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
