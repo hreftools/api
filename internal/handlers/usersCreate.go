@@ -3,7 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/mail"
 	"regexp"
 	"strings"
 
@@ -24,6 +26,13 @@ var reservedUsernames = map[string]bool{
 }
 
 func (b *UserCreateBody) Validate() error {
+	// username
+	b.Username = strings.TrimSpace(b.Username)
+
+	if len(b.Username) == 0 {
+		return errors.New("username is required")
+	}
+
 	if len(b.Username) < store.UserUsernameLengthMin {
 		return errors.New("username must be min 3 characters")
 	}
@@ -48,8 +57,34 @@ func (b *UserCreateBody) Validate() error {
 		return errors.New("username cannot end with hyphen or underscore")
 	}
 
+	if reserved := reservedUsernames[b.Username]; reserved {
+		return errors.New("username is reserved")
+	}
+
+	// password
+	if len(b.Password) == 0 {
+		return errors.New("password is required")
+	}
+
 	if len(b.Password) < store.UserPasswordLengthMin {
-		return errors.New("password must be between 12")
+		return errors.New("password must be at least 12 characters")
+	}
+
+	// email
+	b.Email = strings.TrimSpace(b.Email)
+
+	if len(b.Email) == 0 {
+		return errors.New("email is required")
+	}
+
+	// validate format RFC 5322
+	if _, err := mail.ParseAddress(b.Email); err != nil {
+		return errors.New("email format is invalid")
+	}
+
+	// limit length as pet smtp spec RFC 5321
+	if len(b.Email) > 254 {
+		return errors.New("email must be at most 254 characters")
 	}
 
 	return nil
@@ -70,21 +105,26 @@ func UserCreate(store *store.Store) http.HandlerFunc {
 			return
 		}
 
+		fmt.Printf("%+v\n", body)
 		if err := body.Validate(); err != nil {
 			response.HandleClientError(w, err, err.Error())
 			return
 		}
+		fmt.Printf("%+v\n", body)
 
 		passwordHash, err := utils.PasswordHash(body.Password)
 		if err != nil {
 			response.HandleClientError(w, err, "failed to hash password")
+			return
 		}
 
-		rr, err := store.Users.Create(r.Context(), body.Username, body.Email, passwordHash)
+		rr, err := store.Users.Create(r.Context(), strings.TrimSpace(body.Username), strings.TrimSpace(body.Email), passwordHash)
 		if err != nil {
 			response.HandleDbError(w, err)
 			return
 		}
+
+		// send email to the user with the link to confirm an account here
 
 		response := &UserCreateResponse{
 			Status: "ok",

@@ -32,6 +32,7 @@ func New(store *store.Store) *http.Server {
 	mux.HandleFunc("DELETE /resources/{id}", handlers.ResourcesDelete(store))
 	// users
 	mux.HandleFunc("GET /users", handlers.UsersList(store))
+	mux.HandleFunc("GET /users/{id}", handlers.UsersGet(store))
 	mux.HandleFunc("POST /users", handlers.UserCreate(store))
 
 	// version api
