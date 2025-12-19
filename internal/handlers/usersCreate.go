@@ -3,16 +3,16 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"regexp"
 	"strings"
+	"time"
 
-	"github.com/zapi-sh/api/internal/db"
-	"github.com/zapi-sh/api/internal/response"
-	"github.com/zapi-sh/api/internal/store"
-	"github.com/zapi-sh/api/internal/utils"
+	"github.com/jumplist/api/internal/db"
+	"github.com/jumplist/api/internal/response"
+	"github.com/jumplist/api/internal/store"
+	"github.com/jumplist/api/internal/utils"
 )
 
 type UserCreateBody struct {
@@ -105,12 +105,10 @@ func UserCreate(store *store.Store) http.HandlerFunc {
 			return
 		}
 
-		fmt.Printf("%+v\n", body)
 		if err := body.Validate(); err != nil {
 			response.HandleClientError(w, err, err.Error())
 			return
 		}
-		fmt.Printf("%+v\n", body)
 
 		passwordHash, err := utils.PasswordHash(body.Password)
 		if err != nil {
@@ -118,7 +116,7 @@ func UserCreate(store *store.Store) http.HandlerFunc {
 			return
 		}
 
-		rr, err := store.Users.Create(r.Context(), strings.TrimSpace(body.Username), strings.TrimSpace(body.Email), passwordHash)
+		u, err := store.Users.Create(r.Context(), strings.TrimSpace(body.Username), strings.TrimSpace(body.Email), passwordHash, time.Now().Add(time.Hour*48))
 		if err != nil {
 			response.HandleDbError(w, err)
 			return
@@ -128,7 +126,7 @@ func UserCreate(store *store.Store) http.HandlerFunc {
 
 		response := &UserCreateResponse{
 			Status: "ok",
-			Data:   rr,
+			Data:   u,
 		}
 
 		w.WriteHeader(http.StatusCreated)

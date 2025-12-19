@@ -1,4 +1,4 @@
-# zapi.sh API
+# jumplist API
 
 ## Requirements
 

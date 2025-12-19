@@ -24,13 +24,13 @@ type Resource struct {
 type User struct {
 	ID                              uuid.UUID     `json:"id"`
 	Email                           string        `json:"email"`
-	EmailVerified                   bool          `json:"emailVerified"`
-	EmailVerificationToken          uuid.NullUUID `json:"emailVerificationToken"`
-	EmailVerificationTokenExpiresAt *time.Time    `json:"emailVerificationTokenExpiresAt"`
-	Password                        string        `json:"password"`
+	EmailVerified                   bool          `json:"-"`
+	EmailVerificationToken          uuid.NullUUID `json:"-"`
+	EmailVerificationTokenExpiresAt *time.Time    `json:"-"`
+	Password                        string        `json:"-"`
 	Username                        string        `json:"username"`
-	IsAdmin                         bool          `json:"isAdmin"`
-	IsPro                           bool          `json:"isPro"`
+	IsAdmin                         bool          `json:"-"`
+	IsPro                           bool          `json:"-"`
 	CreatedAt                       time.Time     `json:"createdAt"`
 	UpdatedAt                       time.Time     `json:"updatedAt"`
 }

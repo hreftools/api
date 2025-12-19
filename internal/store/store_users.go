@@ -2,8 +2,10 @@ package store
 
 import (
 	"context"
+	"time"
+
 	"github.com/google/uuid"
-	"github.com/zapi-sh/api/internal/db"
+	"github.com/jumplist/api/internal/db"
 )
 
 const (
@@ -15,7 +17,7 @@ const (
 type UserStore interface {
 	List(ctx context.Context) ([]db.User, error)
 	Get(ctx context.Context, id uuid.UUID) (db.User, error)
-	Create(ctx context.Context, username string, email string, password string) (db.User, error)
+	Create(ctx context.Context, username string, email string, password string, emailVerificationTokenExpiresAt time.Time) (db.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -37,11 +39,12 @@ func (r *userStore) Get(ctx context.Context, id uuid.UUID) (db.User, error) {
 	return r.queries.GetUser(ctx, id)
 }
 
-func (r *userStore) Create(ctx context.Context, username string, email string, password string) (db.User, error) {
+func (r *userStore) Create(ctx context.Context, username string, email string, password string, emailVerificationTokenExpiresAt time.Time) (db.User, error) {
 	args := db.CreateUserParams{
-		Username: username,
-		Email:    email,
-		Password: password,
+		Username:                        username,
+		Email:                           email,
+		Password:                        password,
+		EmailVerificationTokenExpiresAt: &emailVerificationTokenExpiresAt,
 	}
 
 	return r.queries.CreateUser(ctx, args)

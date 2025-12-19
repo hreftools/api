@@ -43,11 +43,11 @@ gen:
 migrate-create:
 	migrate create -dir ./sql/migrations -ext sql -seq $(name)
 
-# make migrate-up db_url=postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable
+# make migrate-up db_url=postgres://postgres:postgres@localhost:5432/jumplist?sslmode=disable
 migrate-up:
 	migrate -path ./sql/migrations -database $(db_url) up
 
-# make migrate-down db_url=postgres://postgres:postgres@localhost:5432/zapishdb?sslmode=disable
+# make migrate-down db_url=postgres://postgres:postgres@localhost:5432/jumplist?sslmode=disable
 migrate-down:
 	migrate -path ./sql/migrations -database $(db_url) down
 

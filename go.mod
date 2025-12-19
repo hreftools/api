@@ -1,4 +1,4 @@
-module github.com/zapi-sh/api
+module github.com/jumplist/api
 
 go 1.25.3
 

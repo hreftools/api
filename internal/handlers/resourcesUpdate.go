@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/zapi-sh/api/internal/db"
-	"github.com/zapi-sh/api/internal/response"
-	"github.com/zapi-sh/api/internal/store"
-	"github.com/zapi-sh/api/internal/utils"
+	"github.com/jumplist/api/internal/db"
+	"github.com/jumplist/api/internal/response"
+	"github.com/jumplist/api/internal/store"
+	"github.com/jumplist/api/internal/utils"
 )
 
 type ResourceUpdateBody struct {

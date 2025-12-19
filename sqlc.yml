@@ -24,7 +24,18 @@ sql:
           - column: "users.updated_at"
             go_type:
               type: "time.Time"
+          - column: "users.email_verified"
+            go_struct_tag: json:"-"
+          - column: "users.email_verification_token"
+            go_struct_tag: json:"-"
           - column: "users.email_verification_token_expires_at"
             go_type:
               type: "time.Time"
               pointer: true
+            go_struct_tag: json:"-"
+          - column: "users.password"
+            go_struct_tag: json:"-"
+          - column: "users.is_admin"
+            go_struct_tag: json:"-"
+          - column: "users.is_pro"
+            go_struct_tag: json:"-"

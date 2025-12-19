@@ -12,8 +12,8 @@ import (
 	"time"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/zapi-sh/api/internal/server"
-	"github.com/zapi-sh/api/internal/store"
+	"github.com/jumplist/api/internal/server"
+	"github.com/jumplist/api/internal/store"
 )
 
 func run(ctx context.Context) error {

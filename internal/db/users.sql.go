@@ -7,27 +7,34 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-email, username, password
+email, username, password, email_verification_token_expires_at
 ) VALUES (
-  $1, $2, $3
+  $1, $2, $3, $4
 )
 RETURNING id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email    string `json:"email"`
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Email                           string     `json:"email"`
+	Username                        string     `json:"username"`
+	Password                        string     `json:"-"`
+	EmailVerificationTokenExpiresAt *time.Time `json:"-"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Email, arg.Username, arg.Password)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Email,
+		arg.Username,
+		arg.Password,
+		arg.EmailVerificationTokenExpiresAt,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,

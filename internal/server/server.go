@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/zapi-sh/api/internal/handlers"
-	"github.com/zapi-sh/api/internal/middlewares"
-	"github.com/zapi-sh/api/internal/store"
+	"github.com/jumplist/api/internal/handlers"
+	"github.com/jumplist/api/internal/middlewares"
+	"github.com/jumplist/api/internal/store"
 )
 
 func New(store *store.Store) *http.Server {
@@ -22,18 +22,22 @@ func New(store *store.Store) *http.Server {
 
 	// not found
 	mux.HandleFunc("/", handlers.NotFound)
+
 	// status
 	mux.HandleFunc("GET /status", handlers.Status)
+
 	// resources
 	mux.HandleFunc("GET /resources", handlers.ResourcesList(store))
 	mux.HandleFunc("GET /resources/{id}", handlers.ResourcesGet(store))
 	mux.HandleFunc("POST /resources", handlers.ResourcesCreate(store))
 	mux.HandleFunc("PUT /resources/{id}", handlers.ResourcesUpdate(store))
 	mux.HandleFunc("DELETE /resources/{id}", handlers.ResourcesDelete(store))
+
 	// users
 	mux.HandleFunc("GET /users", handlers.UsersList(store))
 	mux.HandleFunc("GET /users/{id}", handlers.UsersGet(store))
 	mux.HandleFunc("POST /users", handlers.UserCreate(store))
+	mux.HandleFunc("DELETE /users/{id}", handlers.UsersDelete(store))
 
 	// version api
 	v1 := http.NewServeMux()
