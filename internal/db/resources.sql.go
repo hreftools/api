@@ -13,9 +13,9 @@ import (
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources (
-  title, description, url, favourite, read_later
+    title, description, url, favourite, read_later
 ) VALUES (
-  $1, $2, $3, $4, $5
+    $1, $2, $3, $4, $5
 )
 RETURNING id, title, description, url, favourite, read_later, created_at, updated_at
 `
@@ -62,8 +62,10 @@ func (q *Queries) DeleteResource(ctx context.Context, id uuid.UUID) error {
 
 const getResource = `-- name: GetResource :one
 SELECT id, title, description, url, favourite, read_later, created_at, updated_at FROM resources
-WHERE id =
-$1 LIMIT 1
+WHERE
+    id =
+    $1
+LIMIT 1
 `
 
 func (q *Queries) GetResource(ctx context.Context, id uuid.UUID) (Resource, error) {
@@ -121,11 +123,12 @@ func (q *Queries) ListResources(ctx context.Context) ([]Resource, error) {
 
 const updateResource = `-- name: UpdateResource :one
 UPDATE resources
-  SET title = $2,
-  description = $3,
-  url = $4,
-  favourite = $5,
-  read_later = $6
+SET
+    title = $2,
+    description = $3,
+    url = $4,
+    favourite = $5,
+    read_later = $6
 WHERE id = $1
 RETURNING id, title, description, url, favourite, read_later, created_at, updated_at
 `

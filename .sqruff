@@ -1,0 +1,8 @@
+[sqruff]
+dialect = postgres
+
+[sqruff:indentation]
+indented_joins = True
+
+[sqlfluff:rules:capitalisation.identifiers]
+extended_capitalisation_policy = lower

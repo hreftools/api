@@ -14,9 +14,9 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-email, username, password, email_verification_token_expires_at
+    email, username, password, email_verification_token_expires_at
 ) VALUES (
-  $1, $2, $3, $4
+    $1, $2, $3, $4
 )
 RETURNING id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at
 `
@@ -64,8 +64,10 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 
 const getUser = `-- name: GetUser :one
 SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at FROM users
-WHERE id =
-$1 LIMIT 1
+WHERE
+    id =
+    $1
+LIMIT 1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
