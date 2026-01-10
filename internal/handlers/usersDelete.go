@@ -36,7 +36,7 @@ func UsersDelete(store *store.Store) http.HandlerFunc {
 			return
 		}
 
-		response := &UserDeleteResponse{
+		response := &UsersDeleteResponse{
 			Status: "ok",
 			Data:   u,
 		}
