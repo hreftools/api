@@ -16,11 +16,13 @@ type Querier interface {
 	DeleteResource(ctx context.Context, id uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 	GetResource(ctx context.Context, id uuid.UUID) (Resource, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByEmailVerificationToken(ctx context.Context, emailVerificationToken uuid.NullUUID) (User, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (User, error)
 	ListResources(ctx context.Context) ([]Resource, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	UpdateResource(ctx context.Context, arg UpdateResourceParams) (Resource, error)
+	UpdateVerificationToken(ctx context.Context, arg UpdateVerificationTokenParams) (User, error)
 	VerifyUser(ctx context.Context, id uuid.UUID) (User, error)
 }
 

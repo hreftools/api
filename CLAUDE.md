@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Go HTTP API server (`github.com/jumplist/api`) that provides a simple REST API. The codebase uses Go 1.25.3 and the standard library's `net/http` package.
+This is a Go HTTP API server (`github.com/hreftools/api`) that provides a simple REST API. The codebase uses Go 1.25.3 and the standard library's `net/http` package.
 
 ## Development Philosophy
 

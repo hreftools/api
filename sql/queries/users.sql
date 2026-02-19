@@ -14,6 +14,14 @@ WHERE
     $1
 LIMIT 1;
 
+-- name: GetUserByEmail :one
+SELECT * FROM users
+WHERE
+    email
+    =
+    $1
+LIMIT 1;
+
 -- name: ListUsers :many
 SELECT * FROM users
 ORDER BY created_at;
@@ -39,6 +47,14 @@ SET
     email_verified = TRUE,
     email_verification_token = NULL,
     email_verification_token_expires_at = NULL
+WHERE id = $1
+RETURNING *;
+
+-- name: UpdateVerificationToken :one
+UPDATE users
+SET
+    email_verification_token = $2,
+    email_verification_token_expires_at = $3
 WHERE id = $1
 RETURNING *;
 

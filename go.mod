@@ -1,4 +1,4 @@
-module github.com/jumplist/api
+module github.com/hreftools/api
 
 go 1.25.3
 

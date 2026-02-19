@@ -1,13 +1,13 @@
-name: jumplist
+name: hreftools
 
 services:
   postgres:
-    container_name: jumplist-db
+    container_name: hreftools-db
     image: postgres:18.1
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: jumplist
+      POSTGRES_DB: hreftools
     ports:
       - "5432:5432"
     volumes:

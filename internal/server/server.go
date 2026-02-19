@@ -5,13 +5,13 @@ import (
 	"os"
 	"time"
 
-	"github.com/jumplist/api/internal/handlers"
-	"github.com/jumplist/api/internal/middlewares"
-	"github.com/jumplist/api/internal/store"
-	"github.com/resend/resend-go/v3"
+	"github.com/hreftools/api/internal/emails"
+	"github.com/hreftools/api/internal/handlers"
+	"github.com/hreftools/api/internal/middlewares"
+	"github.com/hreftools/api/internal/store"
 )
 
-func New(store *store.Store, resendClient *resend.Client) *http.Server {
+func New(store *store.Store, emailSender emails.EmailSender) *http.Server {
 	port := os.Getenv("PORT")
 
 	if port == "" {
@@ -43,12 +43,11 @@ func New(store *store.Store, resendClient *resend.Client) *http.Server {
 	mux.HandleFunc("DELETE /users/{id}", handlers.UsersDelete(store))
 
 	// auth
-	mux.HandleFunc("POST /auth/signup", handlers.AuthSignup(store, resendClient))
+	mux.HandleFunc("POST /auth/signup", handlers.AuthSignup(store, emailSender))
 	// mux.HandleFunc("POST /auth/signin", handlers.xxx(store))
 	// mux.HandleFunc("POST /auth/signout", handlers.xxx(store))
 	mux.HandleFunc("POST /auth/verify", handlers.AuthVerify(store))
-	// TODO: implement this one to trigger resending a new verification email in case the old token exired
-	// mux.HandleFunc("POST /auth/verify-again", handlers.AuthVerifyAgain(store))
+	mux.HandleFunc("POST /auth/resend-verification", handlers.AuthResendVerification(store, emailSender))
 
 	// version api
 	v1 := http.NewServeMux()

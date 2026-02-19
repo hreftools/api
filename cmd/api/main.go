@@ -11,9 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/hreftools/api/internal/emails"
+	"github.com/hreftools/api/internal/server"
+	"github.com/hreftools/api/internal/store"
 	_ "github.com/jackc/pgx/v5/stdlib"
-	"github.com/jumplist/api/internal/server"
-	"github.com/jumplist/api/internal/store"
 	"github.com/resend/resend-go/v3"
 )
 
@@ -52,8 +53,9 @@ func run(ctx context.Context) error {
 
 	store := store.NewStore(pool)
 	resendClient := resend.NewClient(resendApiKey)
+	emailSender := emails.NewResendEmailSender(resendClient)
 
-	srv := server.New(store, resendClient)
+	srv := server.New(store, emailSender)
 
 	chServer := make(chan error, 1)
 

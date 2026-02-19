@@ -77,6 +77,34 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at FROM users
+WHERE
+    email
+    =
+    $1
+LIMIT 1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.EmailVerified,
+		&i.EmailVerificationToken,
+		&i.EmailVerificationTokenExpiresAt,
+		&i.Password,
+		&i.Username,
+		&i.IsAdmin,
+		&i.IsPro,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByEmailVerificationToken = `-- name: GetUserByEmailVerificationToken :one
 SELECT id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at FROM users
 WHERE
@@ -171,6 +199,40 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateVerificationToken = `-- name: UpdateVerificationToken :one
+UPDATE users
+SET
+    email_verification_token = $2,
+    email_verification_token_expires_at = $3
+WHERE id = $1
+RETURNING id, email, email_verified, email_verification_token, email_verification_token_expires_at, password, username, is_admin, is_pro, created_at, updated_at
+`
+
+type UpdateVerificationTokenParams struct {
+	ID                              uuid.UUID     `json:"id"`
+	EmailVerificationToken          uuid.NullUUID `json:"-"`
+	EmailVerificationTokenExpiresAt *time.Time    `json:"-"`
+}
+
+func (q *Queries) UpdateVerificationToken(ctx context.Context, arg UpdateVerificationTokenParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, updateVerificationToken, arg.ID, arg.EmailVerificationToken, arg.EmailVerificationTokenExpiresAt)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.EmailVerified,
+		&i.EmailVerificationToken,
+		&i.EmailVerificationTokenExpiresAt,
+		&i.Password,
+		&i.Username,
+		&i.IsAdmin,
+		&i.IsPro,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const verifyUser = `-- name: VerifyUser :one

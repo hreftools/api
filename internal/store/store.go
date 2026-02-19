@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	"github.com/jumplist/api/internal/db"
+	"github.com/hreftools/api/internal/db"
 )
 
 type Store struct {

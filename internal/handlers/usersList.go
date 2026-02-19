@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/jumplist/api/internal/db"
-	"github.com/jumplist/api/internal/response"
-	"github.com/jumplist/api/internal/store"
+	"github.com/hreftools/api/internal/db"
+	"github.com/hreftools/api/internal/response"
+	"github.com/hreftools/api/internal/store"
 )
 
 type UsersListResponse struct {

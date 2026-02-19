@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jumplist/api/internal/db"
+	"github.com/hreftools/api/internal/db"
 )
 
 const (

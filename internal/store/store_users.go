@@ -2,24 +2,30 @@ package store
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jumplist/api/internal/db"
+	"github.com/hreftools/api/internal/db"
 )
 
 const (
-	UserUsernameLengthMin = 3
-	UserUsernameLengthMax = 32
-	UserPasswordLengthMin = 12
+	UserUsernameLengthMin           = 3
+	UserUsernameLengthMax           = 32
+	UserPasswordLengthMin           = 12
+	UserVerificationTokenExpiration = time.Hour * 24
 )
+
+var UserPattern = regexp.MustCompile(`^[a-z0-9_-]+$`)
 
 type UserStore interface {
 	List(ctx context.Context) ([]db.User, error)
 	GetById(ctx context.Context, id uuid.UUID) (db.User, error)
+	GetByEmail(ctx context.Context, email string) (db.User, error)
 	GetByEmailVerificationToken(ctx context.Context, id uuid.UUID) (db.User, error)
 	Create(ctx context.Context, email string, emailVerified bool, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time, password string, username string, isAdmin bool, isPro bool) (db.User, error)
 	Verify(ctx context.Context, id uuid.UUID) (db.User, error)
+	UpdateVerificationToken(ctx context.Context, id uuid.UUID, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time) (db.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -40,6 +46,11 @@ func (r *userStore) List(ctx context.Context) ([]db.User, error) {
 func (r *userStore) GetById(ctx context.Context, id uuid.UUID) (db.User, error) {
 	return r.queries.GetUserById(ctx, id)
 }
+
+func (r *userStore) GetByEmail(ctx context.Context, email string) (db.User, error) {
+	return r.queries.GetUserByEmail(ctx, email)
+}
+
 func (r *userStore) GetByEmailVerificationToken(ctx context.Context, emailVerificationToken uuid.UUID) (db.User, error) {
 	return r.queries.GetUserByEmailVerificationToken(ctx, uuid.NullUUID{Valid: true, UUID: emailVerificationToken})
 }
@@ -60,8 +71,16 @@ func (r *userStore) Create(ctx context.Context, email string, emailVerified bool
 }
 
 func (r *userStore) Verify(ctx context.Context, id uuid.UUID) (db.User, error) {
-
 	return r.queries.VerifyUser(ctx, id)
+}
+
+func (r *userStore) UpdateVerificationToken(ctx context.Context, id uuid.UUID, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time) (db.User, error) {
+	args := db.UpdateVerificationTokenParams{
+		ID:                              id,
+		EmailVerificationToken:          emailVerificatinToken,
+		EmailVerificationTokenExpiresAt: emailVerificationTokenExpiresAt,
+	}
+	return r.queries.UpdateVerificationToken(ctx, args)
 }
 
 func (r *userStore) Delete(ctx context.Context, id uuid.UUID) error {
