@@ -16,7 +16,6 @@ import (
 	"github.com/hreftools/api/internal/emails"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
-	"github.com/resend/resend-go/v3"
 )
 
 type AuthResendVerificationBody struct {
@@ -81,7 +80,7 @@ func AuthResendVerification(store *store.Store, emailSender emails.EmailSender) 
 			return
 		}
 
-		params := &resend.SendEmailRequest{
+		params := emails.EmailSendParams{
 			From: "href.tools <auth@mail.href.tools>",
 			To:   []string{email},
 			// Text:    fmt.Sprintf("Welcome to href.tools!\n\nYour username: %s\nYour email: %s\n\nPlease verify your email using the following token: %s\nThis token will expire on %s.\n\nThank you for joining href.tools!", u.Username, email, emailVerificationToken.String(), emailVerificationTokenExpiresAt.Format(time.RFC1123)),

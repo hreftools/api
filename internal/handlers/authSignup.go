@@ -14,7 +14,6 @@ import (
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
 	"github.com/hreftools/api/internal/utils"
-	"github.com/resend/resend-go/v3"
 )
 
 type AuthSignupBody struct {
@@ -126,23 +125,23 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 			return
 		}
 
-		emailVerifyData := emails.EmailVerifyData{
+		emailVerifyData := EmailVerifyData{
 			Username:  username,
 			Email:     email,
 			Token:     emailVerificationToken.UUID.String(),
 			ExpiresAt: emailVerificationTokenExpiresAt.Format(time.RFC1123),
 		}
-		bodyHtml, err := emails.EmailVerifyRenderHtml(emailVerifyData)
+		bodyHtml, err := emailVerifyRenderHtml(emailVerifyData)
 		if err != nil {
 			response.HandleClientError(w, err, "failed to render html email template")
 			return
 		}
-		bodyText, err := emails.EmailVerifyRenderTxt(emailVerifyData)
+		bodyText, err := emailVerifyRenderTxt(emailVerifyData)
 		if err != nil {
 			response.HandleClientError(w, err, "failed to render text email template")
 			return
 		}
-		params := &resend.SendEmailRequest{
+		params := emails.EmailSendParams{
 			From:    "href.tools <auth@mail.href.tools>",
 			To:      []string{email},
 			Text:    bodyText,

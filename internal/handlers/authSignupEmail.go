@@ -1,4 +1,4 @@
-package emails
+package handlers
 
 import (
 	"bytes"
@@ -37,7 +37,7 @@ type EmailVerifyData struct {
 	ExpiresAt string
 }
 
-func EmailVerifyRenderHtml(data EmailVerifyData) (string, error) {
+func emailVerifyRenderHtml(data EmailVerifyData) (string, error) {
 	tmpl, err := template.New("email").Parse(emailVerifyTemplateHtml)
 	if err != nil {
 		return "", err
@@ -51,7 +51,7 @@ func EmailVerifyRenderHtml(data EmailVerifyData) (string, error) {
 	return buf.String(), nil
 }
 
-func EmailVerifyRenderTxt(data EmailVerifyData) (string, error) {
+func emailVerifyRenderTxt(data EmailVerifyData) (string, error) {
 	tmpl, err := texttemplate.New("email").Parse(emailVerifyTemplateTxt)
 	if err != nil {
 		return "", err

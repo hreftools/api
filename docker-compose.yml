@@ -3,7 +3,7 @@ name: hreftools
 services:
   postgres:
     container_name: hreftools-db
-    image: postgres:18.1
+    image: postgres:18.2
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

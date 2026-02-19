@@ -23,7 +23,7 @@ type UserStore interface {
 	GetById(ctx context.Context, id uuid.UUID) (db.User, error)
 	GetByEmail(ctx context.Context, email string) (db.User, error)
 	GetByEmailVerificationToken(ctx context.Context, id uuid.UUID) (db.User, error)
-	Create(ctx context.Context, email string, emailVerified bool, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time, password string, username string, isAdmin bool, isPro bool) (db.User, error)
+	Create(ctx context.Context, email string, emailVerified bool, emailVerificationToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time, password string, username string, isAdmin bool, isPro bool) (db.User, error)
 	Verify(ctx context.Context, id uuid.UUID) (db.User, error)
 	UpdateVerificationToken(ctx context.Context, id uuid.UUID, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time) (db.User, error)
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -55,11 +55,11 @@ func (r *userStore) GetByEmailVerificationToken(ctx context.Context, emailVerifi
 	return r.queries.GetUserByEmailVerificationToken(ctx, uuid.NullUUID{Valid: true, UUID: emailVerificationToken})
 }
 
-func (r *userStore) Create(ctx context.Context, email string, emailVerified bool, emailVerificatinToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time, password string, username string, isAdmin bool, isPro bool) (db.User, error) {
+func (r *userStore) Create(ctx context.Context, email string, emailVerified bool, emailVerificationToken uuid.NullUUID, emailVerificationTokenExpiresAt *time.Time, password string, username string, isAdmin bool, isPro bool) (db.User, error) {
 	args := db.CreateUserParams{
 		Email:                           email,
 		EmailVerified:                   emailVerified,
-		EmailVerificationToken:          emailVerificatinToken,
+		EmailVerificationToken:          emailVerificationToken,
 		EmailVerificationTokenExpiresAt: emailVerificationTokenExpiresAt,
 		Password:                        password,
 		Username:                        username,
