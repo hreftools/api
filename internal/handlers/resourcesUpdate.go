@@ -9,7 +9,7 @@ import (
 	"github.com/hreftools/api/internal/db"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
-	"github.com/hreftools/api/internal/utils"
+	"github.com/hreftools/api/internal/validator"
 )
 
 type ResourceUpdateBody struct {
@@ -21,16 +21,16 @@ type ResourceUpdateBody struct {
 }
 
 func (b *ResourceUpdateBody) Validate() error {
-	if len(b.Title) < store.ResourceTitleLengthMin || len(b.Title) > store.ResourceTitleLengthMax {
-		return errors.New("title must be between 3 and 255 characters")
+	if err := validator.ResourceTitle(b.Title); err != nil {
+		return err
 	}
 
-	if utils.IsValidURL(b.URL) == false {
-		return errors.New("url must be a valid URL")
+	if err := validator.Url(b.URL); err != nil {
+		return err
 	}
 
-	if len(b.Description) > store.ResourceDescriptionLengthMax {
-		return errors.New("description must be less than 512 characters")
+	if err := validator.ResourceDescription(b.Description); err != nil {
+		return err
 	}
 
 	if b.Favourite == nil {

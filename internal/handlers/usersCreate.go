@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"net/mail"
-	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -13,6 +11,7 @@ import (
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
 	"github.com/hreftools/api/internal/utils"
+	"github.com/hreftools/api/internal/validator"
 )
 
 type UserCreateBody struct {
@@ -24,65 +23,16 @@ type UserCreateBody struct {
 }
 
 func (b *UserCreateBody) Validate() error {
-	// username
-	b.Username = strings.TrimSpace(b.Username)
-
-	if len(b.Username) == 0 {
-		return errors.New("username is required")
+	if err := validator.Username(b.Username); err != nil {
+		return err
 	}
 
-	if len(b.Username) < store.UserUsernameLengthMin {
-		return errors.New("username must be min 3 characters")
+	if err := validator.Email(b.Email); err != nil {
+		return err
 	}
 
-	if len(b.Username) > store.UserUsernameLengthMax {
-		return errors.New("username must be max 32 characters")
-	}
-
-	if b.Username != strings.ToLower(b.Username) {
-		return errors.New("username must be lowercase")
-	}
-
-	if !regexp.MustCompile(`^[a-z0-9_-]+$`).MatchString(b.Username) {
-		return errors.New("username can only contain lowercase characters, numbers, hyphens, and underscores")
-	}
-
-	if strings.HasPrefix(b.Username, "-") || strings.HasPrefix(b.Username, "_") {
-		return errors.New("username cannot start with hyphen or underscore")
-	}
-
-	if strings.HasSuffix(b.Username, "-") || strings.HasSuffix(b.Username, "_") {
-		return errors.New("username cannot end with hyphen or underscore")
-	}
-
-	if reserved := reservedUsernames[b.Username]; reserved {
-		return errors.New("username is reserved")
-	}
-
-	// password
-	if len(b.Password) == 0 {
-		return errors.New("password is required")
-	}
-
-	if len(b.Password) < store.UserPasswordLengthMin {
-		return errors.New("password must be at least 12 characters")
-	}
-
-	// email
-	b.Email = strings.TrimSpace(b.Email)
-
-	if len(b.Email) == 0 {
-		return errors.New("email is required")
-	}
-
-	// validate format RFC 5322
-	if _, err := mail.ParseAddress(b.Email); err != nil {
-		return errors.New("email format is invalid")
-	}
-
-	// limit length as pet smtp spec RFC 5321
-	if len(b.Email) > 254 {
-		return errors.New("email must be at most 254 characters")
+	if err := validator.Password(b.Password); err != nil {
+		return err
 	}
 
 	if b.IsAdmin == nil {
