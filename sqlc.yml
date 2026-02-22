@@ -7,7 +7,6 @@ sql:
       go:
         package: "db"
         out: "internal/db"
-        emit_interface: true
         emit_empty_slices: true
         overrides:
           - column: "resources.created_at"
