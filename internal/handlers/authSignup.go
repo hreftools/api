@@ -122,9 +122,7 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 			Data:   models.NewResponseUser(u),
 		}
 
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		response.WriteJSONSuccess(w, http.StatusCreated, res)
+
 	}
 }
