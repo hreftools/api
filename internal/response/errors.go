@@ -33,6 +33,7 @@ func HandleDbError(w http.ResponseWriter, err error) {
 	}
 
 	// db constraint violation (e.g. unique constraint)
+	// https://www.postgresql.org/docs/current/errcodes-appendix.html
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 		writeJSONError(w, http.StatusConflict, "request conflict")
