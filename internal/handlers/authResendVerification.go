@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"log"
 
 	// "fmt"
 	"net/http"
@@ -88,8 +89,7 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 
 		err = emailSender.Send(params)
 		if err != nil {
-			response.HandleClientError(w, err, err.Error())
-			return
+			log.Printf("Failed to send email: %v", err)
 		}
 
 		response := &AuthSignupResponse{
