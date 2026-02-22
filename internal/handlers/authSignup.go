@@ -66,7 +66,7 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 
 		passwordHash, err := utils.PasswordHash(body.Password)
 		if err != nil {
-			response.HandleClientError(w, err, "failed to hash password")
+			response.HandleServerError(w, err, "failed to hash password")
 			return
 		}
 
@@ -94,12 +94,12 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 		}
 		bodyHtml, err := emailVerifyRenderHtml(emailVerifyData)
 		if err != nil {
-			response.HandleClientError(w, err, "failed to render html email template")
+			response.HandleServerError(w, err, "failed to render html email template")
 			return
 		}
 		bodyText, err := emailVerifyRenderTxt(emailVerifyData)
 		if err != nil {
-			response.HandleClientError(w, err, "failed to render text email template")
+			response.HandleServerError(w, err, "failed to render text email template")
 			return
 		}
 		emailParams := emails.EmailSendParams{

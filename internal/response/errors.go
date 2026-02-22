@@ -49,6 +49,11 @@ func HandleClientError(w http.ResponseWriter, err error, message string) {
 	writeJSONError(w, http.StatusBadRequest, message)
 }
 
+func HandleServerError(w http.ResponseWriter, err error, message string) {
+	log.Printf("Server error: %v", err)
+	writeJSONError(w, http.StatusInternalServerError, "internal server error")
+}
+
 func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
 
