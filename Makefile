@@ -60,11 +60,6 @@ docker-down:
 docker-down-v:
 	docker compose down -v
 
-lint:
-	golangci-lint run ./...
-
-format:
-	golangci-lint fmt ./...
 
 # Default target (what runs when you just type 'make')
-.PHONY: build run dev clean test test-coverage install-tools gen docker-up docker-down docker-down-v lint format migration-create migration-up migration-down
+.PHONY: build run dev clean test test-coverage install-tools gen docker-up docker-down docker-down-v migration-create migration-up migration-down
