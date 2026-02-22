@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hreftools/api/internal/db"
 	"github.com/hreftools/api/internal/emails"
+	"github.com/hreftools/api/internal/models"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
 	"github.com/hreftools/api/internal/utils"
@@ -44,8 +44,8 @@ func (b *AuthSignupBody) Validate() error {
 }
 
 type AuthSignupResponse struct {
-	Status string  `json:"status"`
-	Data   db.User `json:"data"`
+	Status string              `json:"status"`
+	Data   models.ResponseUser `json:"data"`
 }
 
 func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc {
@@ -115,9 +115,19 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 			log.Printf("Failed to send email: %v", err)
 		}
 
+		resUser := models.ResponseUser{
+			ID:            u.ID,
+			Email:         u.Email,
+			EmailVerified: u.EmailVerified,
+			Username:      u.Username,
+			IsAdmin:       u.IsAdmin,
+			IsPro:         u.IsPro,
+			CreatedAt:     u.CreatedAt,
+			UpdatedAt:     u.UpdatedAt,
+		}
 		res := &AuthSignupResponse{
 			Status: "ok",
-			Data:   u,
+			Data:   resUser,
 		}
 
 		w.WriteHeader(http.StatusCreated)

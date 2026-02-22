@@ -5,16 +5,12 @@ import (
 	"errors"
 	"log"
 
-	// "fmt"
 	"net/http"
 	"net/mail"
 	"strings"
 
-	// "time"
-
-	// "github.com/google/uuid"
-	"github.com/hreftools/api/internal/db"
 	"github.com/hreftools/api/internal/emails"
+	"github.com/hreftools/api/internal/models"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
 )
@@ -45,8 +41,8 @@ func (b *AuthResendVerificationBody) Validate() error {
 }
 
 type AuthResendVerificationResponse struct {
-	Status string  `json:"status"`
-	Data   db.User `json:"data"`
+	Status string              `json:"status"`
+	Data   models.ResponseUser `json:"data"`
 }
 
 func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc {
@@ -92,9 +88,19 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 			log.Printf("Failed to send email: %v", err)
 		}
 
-		response := &AuthSignupResponse{
+		resUser := models.ResponseUser{
+			ID:            u.ID,
+			Email:         u.Email,
+			EmailVerified: u.EmailVerified,
+			Username:      u.Username,
+			IsAdmin:       u.IsAdmin,
+			IsPro:         u.IsPro,
+			CreatedAt:     u.CreatedAt,
+			UpdatedAt:     u.UpdatedAt,
+		}
+		response := &AuthResendVerificationResponse{
 			Status: "ok",
-			Data:   u,
+			Data:   resUser,
 		}
 
 		w.WriteHeader(http.StatusCreated)
