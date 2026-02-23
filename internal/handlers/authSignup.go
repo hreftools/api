@@ -123,6 +123,5 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 		}
 
 		response.WriteJSONSuccess(w, http.StatusCreated, res)
-
 	}
 }
