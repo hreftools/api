@@ -18,17 +18,17 @@ type ErrorResponse struct {
 
 func HandleDbError(w http.ResponseWriter, err error) {
 	if errors.Is(err, sql.ErrNoRows) {
-		writeJSONError(w, http.StatusNotFound, "entry not found")
+		WriteJSONError(w, http.StatusNotFound, "entry not found")
 		return
 	}
 
 	if errors.Is(err, context.DeadlineExceeded) {
-		writeJSONError(w, http.StatusRequestTimeout, "request timeout")
+		WriteJSONError(w, http.StatusRequestTimeout, "request timeout")
 		return
 	}
 
 	if errors.Is(err, context.Canceled) {
-		writeJSONError(w, 499, "request cancelled")
+		WriteJSONError(w, 499, "request cancelled")
 		return
 	}
 
@@ -36,25 +36,25 @@ func HandleDbError(w http.ResponseWriter, err error) {
 	// https://www.postgresql.org/docs/current/errcodes-appendix.html
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-		writeJSONError(w, http.StatusConflict, "request conflict")
+		WriteJSONError(w, http.StatusConflict, "request conflict")
 		return
 	}
 
 	log.Printf("Database error: %v", err)
-	writeJSONError(w, http.StatusInternalServerError, "internal server error")
+	WriteJSONError(w, http.StatusInternalServerError, "internal server error")
 }
 
 func HandleClientError(w http.ResponseWriter, err error, message string) {
 	log.Printf("Client error: %v", err)
-	writeJSONError(w, http.StatusBadRequest, message)
+	WriteJSONError(w, http.StatusBadRequest, message)
 }
 
 func HandleServerError(w http.ResponseWriter, err error, message string) {
 	log.Printf("Server error: %v", err)
-	writeJSONError(w, http.StatusInternalServerError, "internal server error")
+	WriteJSONError(w, http.StatusInternalServerError, "internal server error")
 }
 
-func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
+func WriteJSONError(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
 
 	response := &ErrorResponse{

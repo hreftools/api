@@ -73,17 +73,17 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 
 		token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
 
-		emailVerifyData := EmailVerifyData{
+		emailVerifyData := emails.AuthSignupParams{
 			Username: body.Username,
 			Email:    body.Email,
 			Token:    token.UUID.String(),
 		}
-		bodyHtml, err := emailVerifyRenderHtml(emailVerifyData)
+		bodyHtml, err := emails.RenderTemplateHtml(emails.AuthSignupTemplateHtml, emailVerifyData)
 		if err != nil {
 			response.HandleServerError(w, err, "failed to render html email template")
 			return
 		}
-		bodyText, err := emailVerifyRenderTxt(emailVerifyData)
+		bodyText, err := emails.RenderTemplateTxt(emails.AuthSignupTemplateTxt, emailVerifyData)
 		if err != nil {
 			response.HandleServerError(w, err, "failed to render text email template")
 			return

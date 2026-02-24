@@ -20,9 +20,9 @@ type UserCreateParams struct {
 }
 
 type UserUpdateVerificationTokenParams struct {
-	id                              uuid.UUID
-	emailVerificationToken          uuid.NullUUID
-	emailVerificationTokenExpiresAt *time.Time
+	Id                              uuid.UUID
+	EmailVerificationToken          uuid.NullUUID
+	EmailVerificationTokenExpiresAt *time.Time
 }
 
 type UserStore interface {
@@ -83,9 +83,9 @@ func (r *userStore) Verify(ctx context.Context, id uuid.UUID) (db.User, error) {
 
 func (r *userStore) UpdateVerificationToken(ctx context.Context, params UserUpdateVerificationTokenParams) (db.User, error) {
 	args := db.UpdateVerificationTokenParams{
-		ID:                              params.id,
-		EmailVerificationToken:          params.emailVerificationToken,
-		EmailVerificationTokenExpiresAt: params.emailVerificationTokenExpiresAt,
+		ID:                              params.Id,
+		EmailVerificationToken:          params.EmailVerificationToken,
+		EmailVerificationTokenExpiresAt: params.EmailVerificationTokenExpiresAt,
 	}
 	return r.queries.UpdateVerificationToken(ctx, args)
 }

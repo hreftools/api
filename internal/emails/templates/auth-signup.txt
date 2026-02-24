@@ -1,0 +1,6 @@
+Welcome to href.tools!
+
+Your username: {{.Username}}
+Your email: {{.Email}}
+Please verify your email using the following token: https://href.tools/verify?token={{.Token}}
+This token will expire in 24 hours.

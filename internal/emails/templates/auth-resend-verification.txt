@@ -1,0 +1,4 @@
+New verification link!
+
+Please verify your email using the following token: https://href.tools/verify?token={{.Token}}
+This token will expire in 24 hours.

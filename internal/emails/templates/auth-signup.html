@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <body>
+    <h1>Welcome to href.tools!</h1>
+    <ul>
+      <li>Your username: {{.Username}}</li>
+      <li>Your email: {{.Email}}</li>
+      <li>Please verify your email using the following token:</li>
+      <li>
+        <a href="https://href.tools/verify?token={{.Token}}"
+          >https://href.tools/verify?token={{.Token}}</a
+        >
+      </li>
+      <li>This token will expire in 24 hours.</li>
+    </ul>
+  </body>
+</html>
