@@ -4,12 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"time"
-
 	"log"
-
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/hreftools/api/internal/emails"
@@ -57,7 +55,6 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 		}
 
 		u, err := s.Users.GetByEmail(r.Context(), body.Email)
-
 		if err != nil {
 			// in case there is no user with the email,
 			// or the email is already verified,
@@ -114,7 +111,6 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 			EmailVerificationTokenExpiresAt: new(time.Now().Add(TokenExpiryDuration)),
 		}
 		u, err = s.Users.UpdateVerificationToken(r.Context(), params)
-
 		if err != nil {
 			response.HandleDbError(w, err)
 			return
