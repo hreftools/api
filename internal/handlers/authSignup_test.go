@@ -99,20 +99,20 @@ func TestAuthSignupBody_Validate(t *testing.T) {
 }
 
 func TestAuthSignup(t *testing.T) {
-	t.Run("fails on unexpected field in body", func(t *testing.T) {
+	t.Run("fails on incorrect body", func(t *testing.T) {
 		s := setupTestStore(t)
 		emailSenderMock := &mockEmailSender{}
 
 		handler := handlers.AuthSignup(s, emailSenderMock)
 
-		body := `{"username":"testuser","email":"test@example.com","password":"SecurePass123!","unexpected":"field"}`
+		body := `this is not a json body`
 		req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -133,20 +133,20 @@ func TestAuthSignup(t *testing.T) {
 		}
 	})
 
-	t.Run("fails on incorrect body", func(t *testing.T) {
+	t.Run("fails on unexpected field in body", func(t *testing.T) {
 		s := setupTestStore(t)
 		emailSenderMock := &mockEmailSender{}
 
 		handler := handlers.AuthSignup(s, emailSenderMock)
 
-		body := `this is not a json body`
+		body := `{"username":"testuser","email":"test@example.com","password":"SecurePass123!","unexpected":"field"}`
 		req := httptest.NewRequest("POST", "/auth/signup", strings.NewReader(body))
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -179,8 +179,8 @@ func TestAuthSignup(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -217,12 +217,12 @@ func TestAuthSignup(t *testing.T) {
 		rec2 := httptest.NewRecorder()
 		handler.ServeHTTP(rec2, req2)
 
-		if rec1.Code != http.StatusCreated {
-			t.Errorf("expected 201, got %d", rec1.Code)
+		if expected := 201; rec1.Code != http.StatusCreated {
+			t.Errorf("expected %d, got %d", expected, rec1.Code)
 		}
 
-		if rec2.Code != http.StatusConflict {
-			t.Errorf("expected 409, got %d", rec2.Code)
+		if expected := 409; rec2.Code != http.StatusConflict {
+			t.Errorf("expected %d, got %d", expected, rec2.Code)
 		}
 
 		var res2 response.ErrorResponse
@@ -255,12 +255,12 @@ func TestAuthSignup(t *testing.T) {
 		rec2 := httptest.NewRecorder()
 		handler.ServeHTTP(rec2, req2)
 
-		if rec1.Code != http.StatusCreated {
-			t.Errorf("expected 201, got %d", rec1.Code)
+		if expected := 201; rec1.Code != http.StatusCreated {
+			t.Errorf("expected %d, got %d", expected, rec1.Code)
 		}
 
-		if rec2.Code != http.StatusConflict {
-			t.Errorf("expected 409, got %d", rec2.Code)
+		if expected := 409; rec2.Code != http.StatusConflict {
+			t.Errorf("expected %d, got %d", expected, rec2.Code)
 		}
 
 		var res1 handlers.AuthSignupResponse
@@ -318,8 +318,8 @@ func TestAuthSignup(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusCreated {
-			t.Errorf("expected 201, got %d", rec.Code)
+		if expected := 201; rec.Code != http.StatusCreated {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if !emailSenderMock.called {

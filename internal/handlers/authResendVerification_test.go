@@ -98,8 +98,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -132,8 +132,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -166,8 +166,8 @@ func TestAuthResendVerification(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -200,8 +200,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d", rec.Code)
+		if expected := 200; rec.Code != http.StatusOK {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -245,8 +245,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d", rec.Code)
+		if expected := 200; rec.Code != http.StatusOK {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if emailSenderMock.called {
@@ -290,8 +290,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusTooManyRequests {
-			t.Errorf("expected 429, got %d", rec.Code)
+		if expected := 429; rec.Code != http.StatusTooManyRequests {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -336,8 +336,8 @@ func TestAuthResendVerification(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d", rec.Code)
+		if expected := 200; rec.Code != http.StatusOK {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		if !emailSenderMock.called {

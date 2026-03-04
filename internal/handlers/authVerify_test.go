@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -96,8 +97,8 @@ func TestAuthVerify(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -125,8 +126,8 @@ func TestAuthVerify(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -154,8 +155,8 @@ func TestAuthVerify(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -178,14 +179,14 @@ func TestAuthVerify(t *testing.T) {
 		handler := handlers.AuthVerify(s)
 
 		token := uuid.New().String()
-		body := `{"token":"` + token + `"}`
+		body := fmt.Sprintf(`{"token":"%s"}`, token)
 		req := httptest.NewRequest("POST", "/auth/verify", strings.NewReader(body))
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusNotFound {
-			t.Errorf("expected 404, got %d", rec.Code)
+		if expected := 404; rec.Code != http.StatusNotFound {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -220,14 +221,14 @@ func TestAuthVerify(t *testing.T) {
 
 		handler := handlers.AuthVerify(s)
 
-		body := `{"token":"` + token.String() + `"}`
+		body := fmt.Sprintf(`{"token":"%s"}`, token.String())
 		req := httptest.NewRequest("POST", "/auth/verify", strings.NewReader(body))
 		rec := httptest.NewRecorder()
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusBadRequest {
-			t.Errorf("expected 400, got %d", rec.Code)
+		if expected := 400; rec.Code != http.StatusBadRequest {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res response.ErrorResponse
@@ -268,8 +269,8 @@ func TestAuthVerify(t *testing.T) {
 
 		handler.ServeHTTP(rec, req)
 
-		if rec.Code != http.StatusOK {
-			t.Errorf("expected 200, got %d", rec.Code)
+		if expected := 200; rec.Code != http.StatusOK {
+			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
 		var res handlers.AuthVerifyResponse
