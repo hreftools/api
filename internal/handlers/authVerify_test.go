@@ -282,24 +282,8 @@ func TestAuthVerify(t *testing.T) {
 			t.Errorf("expected status: %s, got %s", expected, res.Status)
 		}
 
-		if expected := "testuser"; res.Data.Username != expected {
-			t.Errorf("expected username %s, got %s", expected, res.Data.Username)
-		}
-
-		if expected := "test@example.com"; res.Data.Email != expected {
-			t.Errorf("expected email %s, got %s", expected, res.Data.Email)
-		}
-
-		if expected := true; res.Data.EmailVerified != expected {
-			t.Errorf("expected emailVerified %v, got %v", expected, res.Data.EmailVerified)
-		}
-
-		if expected := false; res.Data.IsAdmin != expected {
-			t.Errorf("expected isAdmin %v, got %v", expected, res.Data.IsAdmin)
-		}
-
-		if expected := false; res.Data.IsPro != expected {
-			t.Errorf("expected isPro %v, got %v", expected, res.Data.IsPro)
+		if expected := "ok"; res.Data != expected {
+			t.Errorf("expected data %s, got %s", expected, res.Data)
 		}
 	})
 }

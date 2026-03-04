@@ -272,24 +272,8 @@ func TestAuthSignup(t *testing.T) {
 			t.Errorf("expected status: %s, got %s", expected, res1.Status)
 		}
 
-		if expected := "test"; res1.Data.Username != expected {
-			t.Errorf("expected data: %s, got %s", expected, res1.Data.Username)
-		}
-
-		if expected := "one@example.com"; res1.Data.Email != expected {
-			t.Errorf("expected email %s got %s", expected, res1.Data.Email)
-		}
-
-		if expected := false; res1.Data.EmailVerified != expected {
-			t.Errorf("expected emailVerified %v, got %v", expected, res1.Data.EmailVerified)
-		}
-
-		if expected := false; res1.Data.IsAdmin != expected {
-			t.Errorf("expected isAdmin %v, got %v", expected, res1.Data.IsAdmin)
-		}
-
-		if expected := false; res1.Data.IsPro != expected {
-			t.Errorf("expected isPro %v, got %v", expected, res1.Data.IsPro)
+		if expected := "ok"; res1.Data != expected {
+			t.Errorf("expected data: %s, got %s", expected, res1.Data)
 		}
 
 		var res2 response.ErrorResponse
@@ -339,24 +323,8 @@ func TestAuthSignup(t *testing.T) {
 			t.Errorf("expected status: %s, got %s", expected, res.Status)
 		}
 
-		if expected := "testuser"; res.Data.Username != expected {
-			t.Errorf("expected username %s, got %s", expected, res.Data.Username)
-		}
-
-		if expected := "test@example.com"; res.Data.Email != expected {
-			t.Errorf("expected email %s got %s", expected, res.Data.Email)
-		}
-
-		if expected := false; res.Data.EmailVerified != expected {
-			t.Errorf("expected emailVerified %v, got %v", expected, res.Data.EmailVerified)
-		}
-
-		if expected := false; res.Data.IsAdmin != expected {
-			t.Errorf("expected isAdmin %v, got %v", expected, res.Data.IsAdmin)
-		}
-
-		if expected := false; res.Data.IsPro != expected {
-			t.Errorf("expected isPro %v, got %v", expected, res.Data.IsPro)
+		if expected := "ok"; res.Data != expected {
+			t.Errorf("expected data %s, got %s", expected, res.Data)
 		}
 	})
 }
