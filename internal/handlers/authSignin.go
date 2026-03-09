@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -57,7 +59,11 @@ func AuthSignin(s *store.Store) http.HandlerFunc {
 
 		u, err := s.Users.GetByEmail(r.Context(), body.Email)
 		if err != nil {
-			response.WriteJSONError(w, http.StatusUnauthorized, "invalid email or password")
+			if errors.Is(err, sql.ErrNoRows) {
+				response.WriteJSONError(w, http.StatusUnauthorized, "invalid email or password")
+				return
+			}
+			response.HandleServerError(w, err, "failed to get user")
 			return
 		}
 

@@ -22,7 +22,7 @@ type TokenUpdateExpiresAtParams struct {
 
 type TokenStore interface {
 	Create(ctx context.Context, params TokenCreateParams) (db.Token, error)
-	GetById(ctx context.Context, id uuid.UUID) (db.Token, error)
+	GetByID(ctx context.Context, id uuid.UUID) (db.Token, error)
 	UpdateExpiresAt(ctx context.Context, params TokenUpdateExpiresAtParams) (db.Token, error)
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -47,7 +47,7 @@ func (t *tokenStore) Create(ctx context.Context, params TokenCreateParams) (db.T
 	return t.queries.CreateToken(ctx, args)
 }
 
-func (t *tokenStore) GetById(ctx context.Context, id uuid.UUID) (db.Token, error) {
+func (t *tokenStore) GetByID(ctx context.Context, id uuid.UUID) (db.Token, error) {
 	return t.queries.GetTokenById(ctx, id)
 }
 
