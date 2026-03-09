@@ -276,7 +276,7 @@ func TestAuthSignin(t *testing.T) {
 		rec := httptest.NewRecorder()
 		handler.ServeHTTP(rec, req)
 
-		if expected := 403; rec.Code != http.StatusForbidden {
+		if expected := 401; rec.Code != http.StatusUnauthorized {
 			t.Errorf("expected %d, got %d", expected, rec.Code)
 		}
 
@@ -287,7 +287,7 @@ func TestAuthSignin(t *testing.T) {
 		if expected := "error"; res.Status != expected {
 			t.Errorf("expected status %s, got %s", expected, res.Status)
 		}
-		if expected := "email not verified"; res.Data != expected {
+		if expected := "invalid email or password"; res.Data != expected {
 			t.Errorf("expected data %s, got %s", expected, res.Data)
 		}
 	})

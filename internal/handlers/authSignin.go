@@ -67,17 +67,21 @@ func AuthSignin(s *store.Store) http.HandlerFunc {
 			return
 		}
 
+		if !u.EmailVerified {
+			response.WriteJSONError(w, http.StatusUnauthorized, "invalid email or password")
+			return
+		}
+
 		if !utils.PasswordValidate(body.Password, u.Password) {
 			response.WriteJSONError(w, http.StatusUnauthorized, "invalid email or password")
 			return
 		}
 
-		if !u.EmailVerified {
-			response.WriteJSONError(w, http.StatusForbidden, "email not verified")
-			return
-		}
-
+		const maxUaLength = 255
 		ua := r.Header.Get("User-Agent")
+		if len(ua) > maxUaLength {
+			ua = ua[:maxUaLength]
+		}
 		var description *string
 		if ua != "" {
 			description = &ua
