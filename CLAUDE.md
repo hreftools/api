@@ -104,7 +104,6 @@ api/
 │   │   ├── usersList.go
 │   │   ├── status.go
 │   │   ├── notFound.go
-│   │   └── constants.go
 │   ├── config/
 │   │   └── config.go                  # Shared constants (session durations, context keys)
 │   ├── middlewares/                   # Middleware functions
@@ -188,10 +187,12 @@ api/
 
 **CORS**: Configured for open/public API with `Access-Control-Allow-Origin: *`
 
-**Session Tokens**: Sign-in creates a session token stored in the `tokens` table. The token is set as an HTTP-only `session_id` cookie with a 30-day expiry. The `tokens` table supports two token types (defined in `handlers/constants.go`):
+**Session Tokens**: Sign-in creates a session token stored in the `tokens` table. The token is set as an HTTP-only `session_id` cookie with a 30-day expiry. The `tokens` table supports two token types:
 
 - `TokenTypeSession` (`"session"`) — created on sign-in, used to authenticate requests
 - `TokenTypeAPI` (`"token"`) — for programmatic API access
+
+These constants (and all other shared constants) are defined in `internal/config/config.go`.
 
 **Authentication**: The `Auth` middleware (`middlewares/auth.go`) validates a token from the `Authorization: Bearer <uuid>` header or the `session_id` cookie. On success it stores the authenticated user's ID in the request context under `config.UserIDContextKey`. Use `utils.UserIDFromContext(ctx)` to read it in handlers. Sessions approaching expiry (< 15 days remaining) are renewed automatically via a background goroutine (sliding expiry).
 

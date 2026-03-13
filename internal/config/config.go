@@ -2,11 +2,14 @@ package config
 
 import "time"
 
-const TokenExpiryDuration = 24 * time.Hour
+const EmailVerificationTokenExpiryDuration = 24 * time.Hour
 
 const SessionExpiryDuration = 30 * 24 * time.Hour
 const SessionRenewalThreshold = 15 * 24 * time.Hour
-const UserIDContextKey = "userID"
+
+type contextKey string
+
+const UserIDContextKey contextKey = "userID"
 
 const TokenTypeSession = "session"
 const TokenTypeAPI = "token"

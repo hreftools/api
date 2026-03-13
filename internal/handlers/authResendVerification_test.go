@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/handlers"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
@@ -275,7 +276,7 @@ func TestAuthResendVerification(t *testing.T) {
 			Email:                           "test@example.com",
 			EmailVerified:                   false,
 			EmailVerificationToken:          uuid.NullUUID{Valid: true, UUID: uuid.New()},
-			EmailVerificationTokenExpiresAt: new(time.Now().Add(handlers.TokenExpiryDuration)),
+			EmailVerificationTokenExpiresAt: new(time.Now().Add(config.EmailVerificationTokenExpiryDuration)),
 			Password:                        "strongpassword",
 			Username:                        "testuser",
 			IsAdmin:                         false,

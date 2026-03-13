@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/handlers"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
@@ -320,7 +321,7 @@ func TestAuthSignin(t *testing.T) {
 		cookies := rec.Result().Cookies()
 		var sessionCookie *http.Cookie
 		for _, c := range cookies {
-			if c.Name == handlers.SessionCookieName {
+			if c.Name == config.SessionCookieName {
 				sessionCookie = c
 				break
 			}

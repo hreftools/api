@@ -34,6 +34,13 @@ func Auth(s *store.Store) Middleware {
 			}
 
 			if time.Now().After(token.ExpiresAt) {
+				http.SetCookie(w, &http.Cookie{
+					Name:     config.SessionCookieName,
+					MaxAge:   -1,
+					Path:     "/",
+					HttpOnly: true,
+					Secure:   true,
+				})
 				response.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
