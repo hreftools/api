@@ -27,20 +27,21 @@ func New(s *store.Store, emailSender emails.EmailSender) *http.Server {
 	// status
 	mux.HandleFunc("GET /status", handlers.Status)
 
-	// resources
-	// this requires an authentication, middlware to come later here
-	mux.HandleFunc("GET /resources", handlers.ResourcesList(s))
-	mux.HandleFunc("GET /resources/{id}", handlers.ResourcesGet(s))
-	mux.HandleFunc("POST /resources", handlers.ResourcesCreate(s))
-	mux.HandleFunc("PUT /resources/{id}", handlers.ResourcesUpdate(s))
-	mux.HandleFunc("DELETE /resources/{id}", handlers.ResourcesDelete(s))
+	auth := middlewares.Auth(s)
+	adminOnly := middlewares.MiddlewareStack(auth, middlewares.Admin(s))
 
-	// users
-	// this is for admins only, middleware to come later here
-	mux.HandleFunc("GET /users", handlers.UsersList(s))
-	mux.HandleFunc("GET /users/{id}", handlers.UsersGet(s))
-	mux.HandleFunc("POST /users", handlers.UserCreate(s))
-	mux.HandleFunc("DELETE /users/{id}", handlers.UsersDelete(s))
+	// resources (protected)
+	mux.Handle("GET /resources", auth(handlers.ResourcesList(s)))
+	mux.Handle("GET /resources/{id}", auth(handlers.ResourcesGet(s)))
+	mux.Handle("POST /resources", auth(handlers.ResourcesCreate(s)))
+	mux.Handle("PUT /resources/{id}", auth(handlers.ResourcesUpdate(s)))
+	mux.Handle("DELETE /resources/{id}", auth(handlers.ResourcesDelete(s)))
+
+	// users (admin only)
+	mux.Handle("GET /users", adminOnly(handlers.UsersList(s)))
+	mux.Handle("GET /users/{id}", adminOnly(handlers.UsersGet(s)))
+	mux.Handle("POST /users", adminOnly(handlers.UserCreate(s)))
+	mux.Handle("DELETE /users/{id}", adminOnly(handlers.UsersDelete(s)))
 
 	// auth
 	mux.HandleFunc("POST /auth/signup", handlers.AuthSignup(s, emailSender))

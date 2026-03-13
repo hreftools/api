@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
 	"github.com/hreftools/api/internal/utils"
@@ -91,7 +92,7 @@ func AuthSignin(s *store.Store) http.HandlerFunc {
 			UserID:      u.ID,
 			Type:        TokenTypeSession,
 			Description: description,
-			ExpiresAt:   time.Now().Add(SessionExpiryDuration),
+			ExpiresAt:   time.Now().Add(config.SessionExpiryDuration),
 		})
 		if err != nil {
 			response.HandleServerError(w, err, "failed to create session")
