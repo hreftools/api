@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/emails"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
@@ -82,7 +83,7 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 
 		// in case that the token has been generated in the last 5 minutes,
 		// we should not generate a new token, to avoid spamming the user with emails
-		tokenAge := TokenExpiryDuration - time.Until(*u.EmailVerificationTokenExpiresAt)
+		tokenAge := config.TokenExpiryDuration - time.Until(*u.EmailVerificationTokenExpiresAt)
 		if tokenAge < time.Minute*5 {
 			log.Println("verification email already sent, please wait before requesting a new one")
 			response.WriteJSONError(w, http.StatusTooManyRequests, "verification email already sent, please wait before requesting a new one")
@@ -108,7 +109,7 @@ func AuthResendVerification(s *store.Store, emailSender emails.EmailSender) http
 		params := store.UserUpdateVerificationTokenParams{
 			Id:                              u.ID,
 			EmailVerificationToken:          token,
-			EmailVerificationTokenExpiresAt: new(time.Now().Add(TokenExpiryDuration)),
+			EmailVerificationTokenExpiresAt: new(time.Now().Add(config.TokenExpiryDuration)),
 		}
 		u, err = s.Users.UpdateVerificationToken(r.Context(), params)
 		if err != nil {

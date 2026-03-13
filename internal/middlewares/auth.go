@@ -14,11 +14,6 @@ import (
 	"github.com/hreftools/api/internal/store"
 )
 
-const (
-	tokenTypeSession  = "session"
-	sessionCookieName = "session_id"
-)
-
 func Auth(s *store.Store) Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +39,7 @@ func Auth(s *store.Store) Middleware {
 			}
 
 			// Sliding expiry: renew session tokens that are approaching expiry.
-			if token.Type == tokenTypeSession && time.Until(token.ExpiresAt) < config.SessionRenewalThreshold {
+			if token.Type == config.TokenTypeSession && time.Until(token.ExpiresAt) < config.SessionRenewalThreshold {
 				go func() {
 					// Fire-and-forget renewal. Errors are intentionally swallowed:
 					// a failed renewal is non-fatal — the token remains valid for
@@ -75,7 +70,7 @@ func resolveTokenID(r *http.Request) (uuid.UUID, bool) {
 		}
 	}
 
-	if cookie, err := r.Cookie(sessionCookieName); err == nil {
+	if cookie, err := r.Cookie(config.SessionCookieName); err == nil {
 		if id, err := uuid.Parse(cookie.Value); err == nil {
 			return id, true
 		}

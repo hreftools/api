@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/emails"
 	"github.com/hreftools/api/internal/response"
 	"github.com/hreftools/api/internal/store"
@@ -92,7 +93,7 @@ func AuthSignup(s *store.Store, emailSender emails.EmailSender) http.HandlerFunc
 			Email:                           body.Email,
 			EmailVerified:                   false,
 			EmailVerificationToken:          token,
-			EmailVerificationTokenExpiresAt: new(time.Now().Add(TokenExpiryDuration)),
+			EmailVerificationTokenExpiresAt: new(time.Now().Add(config.TokenExpiryDuration)),
 			Password:                        passwordHash,
 			Username:                        body.Username,
 			IsAdmin:                         false,

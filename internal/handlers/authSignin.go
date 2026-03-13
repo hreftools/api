@@ -90,7 +90,7 @@ func AuthSignin(s *store.Store) http.HandlerFunc {
 
 		token, err := s.Tokens.Create(r.Context(), store.TokenCreateParams{
 			UserID:      u.ID,
-			Type:        TokenTypeSession,
+			Type:        config.TokenTypeSession,
 			Description: description,
 			ExpiresAt:   time.Now().Add(config.SessionExpiryDuration),
 		})
@@ -100,7 +100,7 @@ func AuthSignin(s *store.Store) http.HandlerFunc {
 		}
 
 		http.SetCookie(w, &http.Cookie{
-			Name:     SessionCookieName,
+			Name:     config.SessionCookieName,
 			Value:    token.ID.String(),
 			Expires:  token.ExpiresAt,
 			Path:     "/",
