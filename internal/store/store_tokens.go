@@ -25,6 +25,7 @@ type TokenStore interface {
 	GetByID(ctx context.Context, id uuid.UUID) (db.Token, error)
 	UpdateExpiresAt(ctx context.Context, params TokenUpdateExpiresAtParams) (db.Token, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
 type tokenStore struct {
@@ -61,4 +62,8 @@ func (t *tokenStore) UpdateExpiresAt(ctx context.Context, params TokenUpdateExpi
 
 func (t *tokenStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return t.queries.DeleteToken(ctx, id)
+}
+
+func (t *tokenStore) DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error {
+	return t.queries.DeleteTokensByUserID(ctx, userID)
 }

@@ -25,14 +25,23 @@ type UserUpdateVerificationTokenParams struct {
 	EmailVerificationTokenExpiresAt *time.Time
 }
 
+type UserUpdatePasswordResetTokenParams struct {
+	Id                          uuid.UUID
+	PasswordResetToken          uuid.NullUUID
+	PasswordResetTokenExpiresAt *time.Time
+}
+
 type UserStore interface {
 	List(ctx context.Context) ([]db.User, error)
 	GetById(ctx context.Context, id uuid.UUID) (db.User, error)
 	GetByEmail(ctx context.Context, email string) (db.User, error)
 	GetByEmailVerificationToken(ctx context.Context, id uuid.UUID) (db.User, error)
+	GetByPasswordResetToken(ctx context.Context, token uuid.UUID) (db.User, error)
 	Create(ctx context.Context, params UserCreateParams) (db.User, error)
 	Verify(ctx context.Context, id uuid.UUID) (db.User, error)
 	UpdateVerificationToken(ctx context.Context, params UserUpdateVerificationTokenParams) (db.User, error)
+	UpdatePasswordResetToken(ctx context.Context, params UserUpdatePasswordResetTokenParams) (db.User, error)
+	ResetPassword(ctx context.Context, id uuid.UUID, passwordHash string) (db.User, error)
 	Delete(ctx context.Context, id uuid.UUID) (db.User, error)
 }
 
@@ -88,6 +97,27 @@ func (r *userStore) UpdateVerificationToken(ctx context.Context, params UserUpda
 		EmailVerificationTokenExpiresAt: params.EmailVerificationTokenExpiresAt,
 	}
 	return r.queries.UpdateVerificationToken(ctx, args)
+}
+
+func (r *userStore) GetByPasswordResetToken(ctx context.Context, token uuid.UUID) (db.User, error) {
+	return r.queries.GetUserByPasswordResetToken(ctx, uuid.NullUUID{Valid: true, UUID: token})
+}
+
+func (r *userStore) UpdatePasswordResetToken(ctx context.Context, params UserUpdatePasswordResetTokenParams) (db.User, error) {
+	args := db.UpdatePasswordResetTokenParams{
+		ID:                          params.Id,
+		PasswordResetToken:          params.PasswordResetToken,
+		PasswordResetTokenExpiresAt: params.PasswordResetTokenExpiresAt,
+	}
+	return r.queries.UpdatePasswordResetToken(ctx, args)
+}
+
+func (r *userStore) ResetPassword(ctx context.Context, id uuid.UUID, passwordHash string) (db.User, error) {
+	args := db.ResetUserPasswordParams{
+		ID:       id,
+		Password: passwordHash,
+	}
+	return r.queries.ResetUserPassword(ctx, args)
 }
 
 func (r *userStore) Delete(ctx context.Context, id uuid.UUID) (db.User, error) {

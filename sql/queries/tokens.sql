@@ -17,3 +17,7 @@ RETURNING *;
 -- name: DeleteToken :exec
 DELETE FROM tokens
 WHERE id = $1;
+
+-- name: DeleteTokensByUserID :exec
+DELETE FROM tokens
+WHERE user_id = $1;

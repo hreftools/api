@@ -48,6 +48,8 @@ func New(s *store.Store, emailSender emails.EmailSender) *http.Server {
 	mux.HandleFunc("POST /auth/signin", handlers.AuthSignin(s))
 	mux.HandleFunc("POST /auth/verify", handlers.AuthVerify(s))
 	mux.HandleFunc("POST /auth/resend-verification", handlers.AuthResendVerification(s, emailSender))
+	mux.HandleFunc("POST /auth/reset-password-request", handlers.AuthResetPasswordRequest(s, emailSender))
+	mux.HandleFunc("POST /auth/reset-password-confirm", handlers.AuthResetPasswordConfirm(s))
 	mux.Handle("POST /auth/signout", auth(handlers.AuthSignout(s)))
 
 	// version api

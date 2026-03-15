@@ -55,6 +55,16 @@ func (q *Queries) DeleteToken(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deleteTokensByUserID = `-- name: DeleteTokensByUserID :exec
+DELETE FROM tokens
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteTokensByUserID(ctx context.Context, userID uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteTokensByUserID, userID)
+	return err
+}
+
 const getTokenById = `-- name: GetTokenById :one
 SELECT id, user_id, type, description, expires_at, created_at, updated_at FROM tokens
 WHERE id = $1

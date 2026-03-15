@@ -26,6 +26,10 @@ sql:
             go_type:
               type: "time.Time"
               pointer: true
+          - column: "users.password_reset_token_expires_at"
+            go_type:
+              type: "time.Time"
+              pointer: true
           - column: "tokens.description"
             go_type:
               type: "string"

@@ -17,6 +17,8 @@ CREATE TABLE users (
     email_verification_token UUID,
     email_verification_token_expires_at TIMESTAMPTZ,
     password TEXT NOT NULL,
+    password_reset_token UUID,
+    password_reset_token_expires_at TIMESTAMPTZ,
     username TEXT NOT NULL UNIQUE,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     is_pro BOOLEAN NOT NULL DEFAULT FALSE,

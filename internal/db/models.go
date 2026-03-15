@@ -39,6 +39,8 @@ type User struct {
 	EmailVerificationToken          uuid.NullUUID
 	EmailVerificationTokenExpiresAt *time.Time
 	Password                        string
+	PasswordResetToken              uuid.NullUUID
+	PasswordResetTokenExpiresAt     *time.Time
 	Username                        string
 	IsAdmin                         bool
 	IsPro                           bool
