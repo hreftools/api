@@ -8,6 +8,7 @@ sql:
         package: "db"
         out: "internal/db"
         emit_empty_slices: true
+        emit_interface: true
         overrides:
           - column: "resources.created_at"
             go_type:

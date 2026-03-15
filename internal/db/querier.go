@@ -16,7 +16,7 @@ type Querier interface {
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteResource(ctx context.Context, arg DeleteResourceParams) (Resource, error)
 	DeleteToken(ctx context.Context, id uuid.UUID) error
-	DeleteUser(ctx context.Context, id uuid.UUID) error
+	DeleteUser(ctx context.Context, id uuid.UUID) (User, error)
 	GetResource(ctx context.Context, arg GetResourceParams) (Resource, error)
 	GetTokenById(ctx context.Context, id uuid.UUID) (Token, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)

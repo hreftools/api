@@ -24,13 +24,7 @@ func UsersDelete(s *store.Store) http.HandlerFunc {
 			return
 		}
 
-		u, err := s.Users.GetById(r.Context(), idUuid)
-		if err != nil {
-			response.HandleDbError(w, err)
-			return
-		}
-
-		err = s.Users.Delete(r.Context(), idUuid)
+		u, err := s.Users.Delete(r.Context(), idUuid)
 		if err != nil {
 			response.HandleDbError(w, err)
 			return

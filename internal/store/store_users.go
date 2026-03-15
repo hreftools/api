@@ -33,7 +33,7 @@ type UserStore interface {
 	Create(ctx context.Context, params UserCreateParams) (db.User, error)
 	Verify(ctx context.Context, id uuid.UUID) (db.User, error)
 	UpdateVerificationToken(ctx context.Context, params UserUpdateVerificationTokenParams) (db.User, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID) (db.User, error)
 }
 
 type userStore struct {
@@ -90,6 +90,6 @@ func (r *userStore) UpdateVerificationToken(ctx context.Context, params UserUpda
 	return r.queries.UpdateVerificationToken(ctx, args)
 }
 
-func (r *userStore) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *userStore) Delete(ctx context.Context, id uuid.UUID) (db.User, error) {
 	return r.queries.DeleteUser(ctx, id)
 }
