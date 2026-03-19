@@ -13,28 +13,22 @@ import (
 	"github.com/hreftools/api/internal/utils"
 )
 
-func seedMeUser(t *testing.T, s *store.Store) store.UserCreateParams {
-	t.Helper()
-
-	hash, err := utils.PasswordHash("SecurePass123!")
-	if err != nil {
-		t.Fatalf("failed to hash password: %v", err)
-	}
-
-	return store.UserCreateParams{
-		Email:         "me@example.com",
-		EmailVerified: true,
-		Password:      hash,
-		Username:      "meuser",
-		IsAdmin:       false,
-		IsPro:         true,
-	}
-}
-
 func TestMeGet(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		s := setupTestStore(t)
-		params := seedMeUser(t, s)
+
+		hash, err := utils.PasswordHash("SecurePass123!")
+		if err != nil {
+			t.Fatalf("failed to hash password: %v", err)
+		}
+		params := store.UserCreateParams{
+			Email:         "me@example.com",
+			EmailVerified: true,
+			Password:      hash,
+			Username:      "meuser",
+			IsAdmin:       false,
+			IsPro:         true,
+		}
 
 		user, err := s.Users.Create(t.Context(), params)
 		if err != nil {
