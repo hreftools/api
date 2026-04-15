@@ -1,5 +1,6 @@
 # Binaries
-/api
+/bin/*
+!/bin/.gitkeep
 
 # Test binary, built with `go test -c`
 *.test

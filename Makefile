@@ -1,4 +1,4 @@
-BINARY_NAME=api
+BINARY_NAME=bin/api
 
 .SILENT:
 
@@ -19,6 +19,7 @@ dev:
 clean:
 	go clean
 	rm -f ${BINARY_NAME}
+	rm -rf bin/
 
 # Run tests
 test:
