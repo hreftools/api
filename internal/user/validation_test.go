@@ -84,7 +84,7 @@ func Test_validatePassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := validatePassword(tt.input)
+			_, gotErr := validatePassword(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Password() failed: %v", gotErr)
@@ -134,7 +134,7 @@ func Test_validateToken(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotErr := validateToken(tt.input)
+			_, gotErr := validateToken(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Token() failed: %v", gotErr)

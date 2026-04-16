@@ -32,28 +32,28 @@ const (
 	passwordLengthMin = 12
 )
 
-func validatePassword(p string) error {
+func validatePassword(p string) (string, error) {
 	if len(p) == 0 {
-		return ErrValidationPasswordRequired
+		return p, ErrValidationPasswordRequired
 	}
 
 	if len(p) < passwordLengthMin {
-		return ErrValidationPasswordTooShort
+		return p, ErrValidationPasswordTooShort
 	}
 
-	return nil
+	return p, nil
 }
 
-func validateToken(token string) error {
+func validateToken(token string) (string, error) {
 	if len(token) == 0 {
-		return ErrValidationTokenRequired
+		return token, ErrValidationTokenRequired
 	}
 
 	if _, err := uuid.Parse(token); err != nil {
-		return ErrValidationTokenFormat
+		return token, ErrValidationTokenFormat
 	}
 
-	return nil
+	return token, nil
 }
 
 var reservedUsernames = map[string]bool{

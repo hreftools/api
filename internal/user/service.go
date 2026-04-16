@@ -141,7 +141,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	if err != nil {
 		return err
 	}
-	err = validatePassword(password)
+	password, err = validatePassword(password)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 	if err != nil {
 		return SigninResult{}, err
 	}
-	err = validatePassword(password)
+	password, err = validatePassword(password)
 	if err != nil {
 		return SigninResult{}, err
 	}
@@ -245,7 +245,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 
 // Verify validates a verification token and marks the user as verified.
 func (s *Service) Verify(ctx context.Context, tokenStr string) error {
-	err := validateToken(tokenStr)
+	tokenStr, err := validateToken(tokenStr)
 	if err != nil {
 		return err
 	}
@@ -389,11 +389,11 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 
 // ResetPasswordConfirm validates a reset token and sets the new password.
 func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPassword string) error {
-	err := validateToken(tokenStr)
+	tokenStr, err := validateToken(tokenStr)
 	if err != nil {
 		return err
 	}
-	err = validatePassword(newPassword)
+	newPassword, err = validatePassword(newPassword)
 	if err != nil {
 		return err
 	}
@@ -454,7 +454,7 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 	if err != nil {
 		return User{}, err
 	}
-	err = validatePassword(password)
+	password, err = validatePassword(password)
 	if err != nil {
 		return User{}, err
 	}
