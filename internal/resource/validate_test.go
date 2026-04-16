@@ -119,13 +119,27 @@ func Test_validateURL(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
+		wantResult string
 		wantErr    bool
 		wantErrMsg string
 	}{
 		{
-			name:    "Valid URL",
-			input:   "https://example.com",
-			wantErr: false,
+			name:       "Valid URL",
+			input:      "https://example.com",
+			wantResult: "https://example.com",
+			wantErr:    false,
+		},
+		{
+			name:       "URL is trimmed",
+			input:      "  https://example.com  ",
+			wantResult: "https://example.com",
+			wantErr:    false,
+		},
+		{
+			name:       "URL is returned as parsed string",
+			input:      "HTTP://Example.COM/path",
+			wantResult: "http://Example.COM/path",
+			wantErr:    false,
 		},
 		{
 			name:       "Empty URL",
@@ -148,7 +162,7 @@ func Test_validateURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, gotErr := validateURL(tt.input)
+			gotResult, gotErr := validateURL(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Url() failed: %v", gotErr)
@@ -160,6 +174,9 @@ func Test_validateURL(t *testing.T) {
 			}
 			if tt.wantErr {
 				t.Fatal("Url() succeeded unexpectedly")
+			}
+			if tt.wantResult != "" && gotResult != tt.wantResult {
+				t.Errorf("Url() result = %v, want %v", gotResult, tt.wantResult)
 			}
 		})
 	}

@@ -35,12 +35,14 @@ func validateDescription(d string) (string, error) {
 }
 
 func validateURL(u string) (string, error) {
+	u = strings.TrimSpace(u)
+
 	uParsed, err := url.Parse(u)
 	if err != nil || uParsed.Scheme == "" || uParsed.Host == "" {
 		return u, ErrValidationURLFormat
 	}
 
-	return u, nil
+	return uParsed.String(), nil
 }
 
 func validateFavourite(f *bool) (bool, error) {
