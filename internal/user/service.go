@@ -106,12 +106,13 @@ var (
 	ErrValidationTokenRequired = errors.New("token is required")
 	ErrValidationTokenFormat   = errors.New("token is invalid")
 
-	ErrNotFound           = errors.New("not found")
-	ErrConflict           = errors.New("conflict")
-	ErrInvalidCredentials = errors.New("invalid email or password")
-	ErrEmailNotVerified   = errors.New("invalid email or password")
-	ErrTokenExpired       = errors.New("token has expired")
-	ErrRateLimited        = errors.New("rate limited")
+	ErrNotFound                 = errors.New("not found")
+	ErrConflict                 = errors.New("conflict")
+	ErrInvalidCredentials       = errors.New("invalid email or password")
+	ErrEmailNotVerified         = errors.New("invalid email or password")
+	ErrTokenExpired             = errors.New("token has expired")
+	ErrResendTooFrequent        = errors.New("verification email already sent, please wait before requesting a new one")
+	ErrPasswordResetTooFrequent = errors.New("password reset email already sent, please wait before requesting a new one")
 )
 
 type Service struct {
@@ -198,6 +199,15 @@ type SigninResult struct {
 
 // Signin validates credentials and creates a session token.
 func (s *Service) Signin(ctx context.Context, email, password string, description *string) (SigninResult, error) {
+	email, err := validateEmail(email)
+	if err != nil {
+		return SigninResult{}, err
+	}
+	err = validatePassword(password)
+	if err != nil {
+		return SigninResult{}, err
+	}
+
 	u, err := s.Repo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -229,6 +239,10 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 
 // Verify validates a verification token and marks the user as verified.
 func (s *Service) Verify(ctx context.Context, tokenStr string) error {
+	err := validateToken(tokenStr)
+	if err != nil {
+		return err
+	}
 	token, _ := uuid.Parse(tokenStr)
 
 	u, err := s.Repo.GetByEmailVerificationToken(ctx, token)
@@ -245,23 +259,30 @@ func (s *Service) Verify(ctx context.Context, tokenStr string) error {
 }
 
 // ResendVerification generates a new verification token and sends an email.
-// Returns ErrRateLimited if the last token was generated less than 5 minutes ago.
+// Returns ErrResendTooFrequent if the last token was generated less than 5 minutes ago.
 func (s *Service) ResendVerification(ctx context.Context, email string) error {
+	email, err := validateEmail(email)
+	if err != nil {
+		return err
+	}
+
 	u, err := s.Repo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
-			return nil // silent success for non-existent emails
+			// silent success for non-existent emails
+			return nil
 		}
 		return err
 	}
 
 	if u.EmailVerified {
-		return nil // silent success for already verified
+		// silent success for already verified
+		return nil
 	}
 
 	tokenAge := config.EmailVerificationTokenExpiryDuration - time.Until(*u.EmailVerificationTokenExpiresAt)
 	if tokenAge < time.Minute*5 {
-		return ErrRateLimited
+		return ErrResendTooFrequent
 	}
 
 	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
@@ -302,8 +323,12 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 }
 
 // ResetPasswordRequest generates a password reset token and sends an email.
-// Returns ErrRateLimited if the last token was generated less than 5 minutes ago.
+// Returns ErrPasswordResetTooFrequent if the last token was generated less than 5 minutes ago.
 func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error {
+	email, err := validateEmail(email)
+	if err != nil {
+		return err
+	}
 	u, err := s.Repo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
@@ -315,7 +340,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	if u.PasswordResetTokenExpiresAt != nil {
 		tokenAge := config.PasswordResetTokenExpiryDuration - time.Until(*u.PasswordResetTokenExpiresAt)
 		if tokenAge < time.Minute*5 {
-			return ErrRateLimited
+			return ErrPasswordResetTooFrequent
 		}
 	}
 
@@ -358,6 +383,14 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 
 // ResetPasswordConfirm validates a reset token and sets the new password.
 func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPassword string) error {
+	err := validateToken(tokenStr)
+	if err != nil {
+		return err
+	}
+	err = validatePassword(newPassword)
+	if err != nil {
+		return err
+	}
 	token, _ := uuid.Parse(tokenStr)
 
 	u, err := s.Repo.GetByPasswordResetToken(ctx, token)

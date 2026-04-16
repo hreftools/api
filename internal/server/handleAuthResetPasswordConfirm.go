@@ -2,33 +2,14 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/hreftools/api/internal/user"
-	"github.com/hreftools/api/internal/validator"
 )
 
 type authResetPasswordConfirmBody struct {
 	Token    string `json:"token"`
 	Password string `json:"password"`
-}
-
-func (b *authResetPasswordConfirmBody) normalize() {
-	b.Token = strings.TrimSpace(b.Token)
-}
-
-func (b *authResetPasswordConfirmBody) validate() error {
-	if err := validator.Token(b.Token); err != nil {
-		return err
-	}
-
-	if err := validator.Password(b.Password); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type authResetPasswordConfirmResponse struct {
@@ -46,20 +27,10 @@ func handleAuthResetPasswordConfirm(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		body.normalize()
-
-		if err := body.validate(); err != nil {
-			handleClientError(w, err, err.Error())
-			return
-		}
-
 		err := svc.ResetPasswordConfirm(r.Context(), body.Token, body.Password)
 		if err != nil {
-			if errors.Is(err, user.ErrTokenExpired) {
-				handleClientError(w, err, "token has expired")
-				return
-			}
-			handleDbError(w, err)
+			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 

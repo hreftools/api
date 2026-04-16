@@ -47,10 +47,16 @@ func MapErrorToHTTP(err error) (int, string) {
 		return http.StatusForbidden, "invalid email or password"
 	}
 	if errors.Is(err, ErrTokenExpired) {
-		return http.StatusUnauthorized, "token has expired"
+		return http.StatusUnauthorized, err.Error()
 	}
 	if errors.Is(err, ErrRateLimited) {
 		return http.StatusTooManyRequests, "rate limit exceeded"
+	}
+	if errors.Is(err, ErrResendTooFrequent) {
+		return http.StatusTooManyRequests, err.Error()
+	}
+	if errors.Is(err, ErrPasswordResetTooFrequent) {
+		return http.StatusTooManyRequests, err.Error()
 	}
 
 	log.Printf("Service error: %v", err)

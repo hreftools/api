@@ -2,28 +2,13 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/hreftools/api/internal/user"
-	"github.com/hreftools/api/internal/validator"
 )
 
 type authVerifyBody struct {
 	Token string `json:"token"`
-}
-
-func (b *authVerifyBody) normalize() {
-	b.Token = strings.TrimSpace(b.Token)
-}
-
-func (b *authVerifyBody) validate() error {
-	if err := validator.Token(b.Token); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type authVerifyResponse struct {
@@ -41,20 +26,10 @@ func handleAuthVerify(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		body.normalize()
-
-		if err := body.validate(); err != nil {
-			handleClientError(w, err, err.Error())
-			return
-		}
-
 		err := svc.Verify(r.Context(), body.Token)
 		if err != nil {
-			if errors.Is(err, user.ErrTokenExpired) {
-				handleClientError(w, err, "token has expired")
-				return
-			}
-			handleDbError(w, err)
+			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 

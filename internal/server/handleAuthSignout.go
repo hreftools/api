@@ -17,7 +17,8 @@ func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 		tokenID, _ := resolveTokenID(r)
 
 		if err := svc.Signout(r.Context(), tokenID); err != nil {
-			handleServerError(w, err, "failed to delete session")
+			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
@@ -32,7 +33,7 @@ func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 
 		writeJSONSuccess(w, http.StatusOK, authSignoutResponse{
 			Status: "ok",
-			Data:   "signed out",
+			Data:   "ok",
 		})
 	}
 }

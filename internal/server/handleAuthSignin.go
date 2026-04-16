@@ -2,34 +2,15 @@ package server
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/user"
-	"github.com/hreftools/api/internal/validator"
 )
 
 type authSigninBody struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
-}
-
-func (b *authSigninBody) normalize() {
-	b.Email = strings.ToLower(strings.TrimSpace(b.Email))
-}
-
-func (b *authSigninBody) validate() error {
-	if err := validator.Email(b.Email); err != nil {
-		return err
-	}
-
-	if err := validator.Password(b.Password); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type authSigninResponse struct {
@@ -47,13 +28,6 @@ func handleAuthSignin(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		body.normalize()
-
-		if err := body.validate(); err != nil {
-			handleClientError(w, err, err.Error())
-			return
-		}
-
 		const maxUaLength = 255
 		ua := r.Header.Get("User-Agent")
 		if len(ua) > maxUaLength {
@@ -66,11 +40,8 @@ func handleAuthSignin(svc *user.Service) http.HandlerFunc {
 
 		result, err := svc.Signin(r.Context(), body.Email, body.Password, description)
 		if err != nil {
-			if errors.Is(err, user.ErrInvalidCredentials) || errors.Is(err, user.ErrEmailNotVerified) {
-				writeJSONError(w, http.StatusUnauthorized, "invalid email or password")
-				return
-			}
-			handleServerError(w, err, "failed to sign in")
+			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
