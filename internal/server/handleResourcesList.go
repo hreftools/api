@@ -18,7 +18,8 @@ func handleResourcesList(svc *resource.Service) http.HandlerFunc {
 
 		list, err := svc.List(r.Context(), userID)
 		if err != nil {
-			handleDbError(w, err)
+			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 

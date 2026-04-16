@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/hreftools/api/internal/resource"
-	"github.com/hreftools/api/internal/validator"
 )
 
 type resourceCreateBody struct {
@@ -14,30 +13,6 @@ type resourceCreateBody struct {
 	Description string `json:"description"`
 	Favourite   *bool  `json:"favourite"`
 	ReadLater   *bool  `json:"readLater"`
-}
-
-func (b *resourceCreateBody) validate() error {
-	if err := validator.ResourceTitle(b.Title); err != nil {
-		return err
-	}
-
-	if err := validator.Url(b.URL); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceDescription(b.Description); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceFavourite(b.Favourite); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceReadLater(b.ReadLater); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type resourceCreateResponse struct {
@@ -57,22 +32,18 @@ func handleResourcesCreate(svc *resource.Service) http.HandlerFunc {
 			return
 		}
 
-		if err := body.validate(); err != nil {
-			handleClientError(w, err, err.Error())
-			return
-		}
-
-		params := resource.CreateParams{
+		params := resource.CreateParamsService{
 			UserID:      userID,
 			Title:       body.Title,
 			Url:         body.URL,
 			Description: body.Description,
-			Favourite:   *body.Favourite,
-			ReadLater:   *body.ReadLater,
+			Favourite:   body.Favourite,
+			ReadLater:   body.ReadLater,
 		}
 		rr, err := svc.Create(r.Context(), params)
 		if err != nil {
-			handleDbError(w, err)
+			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 

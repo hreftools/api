@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"strings"
@@ -145,31 +144,6 @@ func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	if err := json.NewEncoder(w).Encode(res); err != nil {
 		log.Printf("Error encoding error response: %v", err)
 	}
-}
-
-func handleDbError(w http.ResponseWriter, err error) {
-	if errors.Is(err, resource.ErrNotFound) {
-		writeJSONError(w, http.StatusNotFound, "entry not found")
-		return
-	}
-
-	if errors.Is(err, resource.ErrConflict) {
-		writeJSONError(w, http.StatusConflict, "request conflict")
-		return
-	}
-
-	if errors.Is(err, context.DeadlineExceeded) {
-		writeJSONError(w, http.StatusRequestTimeout, "request timeout")
-		return
-	}
-
-	if errors.Is(err, context.Canceled) {
-		writeJSONError(w, 499, "request cancelled")
-		return
-	}
-
-	log.Printf("Database error: %v", err)
-	writeJSONError(w, http.StatusInternalServerError, "internal server error")
 }
 
 func handleClientError(w http.ResponseWriter, err error, message string) {

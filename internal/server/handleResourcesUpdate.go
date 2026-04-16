@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/hreftools/api/internal/resource"
-	"github.com/hreftools/api/internal/validator"
 )
 
 type resourceUpdateBody struct {
@@ -15,30 +14,6 @@ type resourceUpdateBody struct {
 	Description string `json:"description"`
 	Favourite   *bool  `json:"favourite"`
 	ReadLater   *bool  `json:"readLater"`
-}
-
-func (b *resourceUpdateBody) validate() error {
-	if err := validator.ResourceTitle(b.Title); err != nil {
-		return err
-	}
-
-	if err := validator.Url(b.URL); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceDescription(b.Description); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceFavourite(b.Favourite); err != nil {
-		return err
-	}
-
-	if err := validator.ResourceReadLater(b.ReadLater); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 type resourceUpdateResponse struct {
@@ -65,23 +40,19 @@ func handleResourcesUpdate(svc *resource.Service) http.HandlerFunc {
 			return
 		}
 
-		if err := body.validate(); err != nil {
-			handleClientError(w, err, err.Error())
-			return
-		}
-
-		params := resource.UpdateParams{
+		params := resource.UpdateParamsService{
 			ID:          idUuid,
 			UserID:      userID,
 			Title:       body.Title,
 			Url:         body.URL,
 			Description: body.Description,
-			Favourite:   *body.Favourite,
-			ReadLater:   *body.ReadLater,
+			Favourite:   body.Favourite,
+			ReadLater:   body.ReadLater,
 		}
 		rr, err := svc.Update(r.Context(), params)
 		if err != nil {
-			handleDbError(w, err)
+			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
