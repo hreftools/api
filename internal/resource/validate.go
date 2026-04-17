@@ -62,6 +62,12 @@ func validateURL(u string) (string, error) {
 		return u, ErrValidationURLFormat
 	}
 
+	// Reject URLs containing credentials (e.g. http://user:secret@example.com).
+	// These would be stored in plaintext and exposed in shared collections.
+	if uParsed.User != nil {
+		return u, ErrValidationURLFormat
+	}
+
 	if isPrivateHost(uParsed.Host) {
 		return u, ErrValidationURLPrivate
 	}

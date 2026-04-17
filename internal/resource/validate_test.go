@@ -172,6 +172,12 @@ func Test_validateURL(t *testing.T) {
 			wantErrMsg: "url is invalid",
 		},
 		{
+			name:       "URL with credentials is rejected",
+			input:      "http://user:secret@example.com",
+			wantErr:    true,
+			wantErrMsg: "url is invalid",
+		},
+		{
 			name:       "javascript: scheme is rejected",
 			input:      "javascript:alert(1)",
 			wantErr:    true,
