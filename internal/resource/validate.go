@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"net"
 	"net/url"
 	"strings"
 	"unicode/utf8"
@@ -61,6 +62,10 @@ func validateURL(u string) (string, error) {
 		return u, ErrValidationURLFormat
 	}
 
+	if isPrivateHost(uParsed.Host) {
+		return u, ErrValidationURLPrivate
+	}
+
 	return uParsed.String(), nil
 }
 
@@ -78,4 +83,43 @@ func validateReadLater(r *bool) (bool, error) {
 	}
 
 	return *r, nil
+}
+
+// isPrivateHost checks whether a host (with optional port) resolves to a
+// loopback, private (RFC 1918), link-local, or IPv6 unique local address.
+// These are blocked to prevent SSRF if the backend ever fetches stored URLs
+// (e.g. link previews, favicons) and to avoid unsafe links in shared collections.
+func isPrivateHost(host string) bool {
+	h := host
+	if strings.Contains(host, ":") {
+		h, _, _ = net.SplitHostPort(host)
+	}
+
+	if strings.EqualFold(h, "localhost") {
+		return true
+	}
+
+	ip := net.ParseIP(h)
+	if ip == nil {
+		return false
+	}
+
+	privateRanges := []string{
+		"127.0.0.0/8",    // loopback
+		"10.0.0.0/8",     // RFC 1918 private
+		"172.16.0.0/12",  // RFC 1918 private
+		"192.168.0.0/16", // RFC 1918 private
+		"169.254.0.0/16", // link-local (AWS/GCP/Azure metadata endpoint)
+		"::1/128",        // IPv6 loopback
+		"fc00::/7",       // IPv6 unique local
+	}
+
+	for _, cidr := range privateRanges {
+		_, block, _ := net.ParseCIDR(cidr)
+		if block.Contains(ip) {
+			return true
+		}
+	}
+
+	return false
 }

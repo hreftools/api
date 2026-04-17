@@ -201,6 +201,42 @@ func Test_validateURL(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "url must be at most 2048 characters",
 		},
+		{
+			name:       "localhost URL is rejected",
+			input:      "http://localhost",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
+		{
+			name:       "Loopback IP is rejected",
+			input:      "http://127.0.0.1:8080",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
+		{
+			name:       "Private network IP (10.x) is rejected",
+			input:      "http://10.0.0.1",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
+		{
+			name:       "Private network IP (192.168.x) is rejected",
+			input:      "http://192.168.1.1",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
+		{
+			name:       "AWS metadata endpoint is rejected",
+			input:      "http://169.254.169.254/latest/meta-data/",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
+		{
+			name:       "IPv6 loopback is rejected",
+			input:      "http://[::1]",
+			wantErr:    true,
+			wantErrMsg: "url must not point to a private or local address",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

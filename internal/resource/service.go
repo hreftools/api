@@ -17,6 +17,7 @@ var (
 	// validation url
 	ErrValidationURLFormat    = errors.New("url is invalid")
 	ErrValidationURLTooLong   = errors.New("url must be at most 2048 characters")
+	ErrValidationURLPrivate   = errors.New("url must not point to a private or local address")
 
 	// validation favourite
 	ErrValidationFavouriteRequired = errors.New("favourite field is required")
