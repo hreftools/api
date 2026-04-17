@@ -159,6 +159,36 @@ func Test_validateURL(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "url is invalid",
 		},
+		{
+			name:       "javascript: scheme is rejected",
+			input:      "javascript:alert(1)",
+			wantErr:    true,
+			wantErrMsg: "url is invalid",
+		},
+		{
+			name:       "data: scheme is rejected",
+			input:      "data:text/html,<script>alert(1)</script>",
+			wantErr:    true,
+			wantErrMsg: "url is invalid",
+		},
+		{
+			name:       "file: scheme is rejected",
+			input:      "file:///etc/passwd",
+			wantErr:    true,
+			wantErrMsg: "url is invalid",
+		},
+		{
+			name:       "ftp: scheme is rejected",
+			input:      "ftp://example.com",
+			wantErr:    true,
+			wantErrMsg: "url is invalid",
+		},
+		{
+			name:       "URL exceeding 2048 characters is rejected",
+			input:      "https://example.com/" + strings.Repeat("a", 2029),
+			wantErr:    true,
+			wantErrMsg: "url must be at most 2048 characters",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -37,8 +37,20 @@ func validateDescription(d string) (string, error) {
 func validateURL(u string) (string, error) {
 	u = strings.TrimSpace(u)
 
+	// 2048 characters is the practical URL length limit enforced by most
+	// modern browsers (Chrome, Firefox, Safari)
+	if len(u) > 2048 {
+		return u, ErrValidationURLTooLong
+	}
+
 	uParsed, err := url.Parse(u)
-	if err != nil || uParsed.Scheme == "" || uParsed.Host == "" {
+	if err != nil || uParsed.Host == "" {
+		return u, ErrValidationURLFormat
+	}
+
+	// Only allow http and https schemes to prevent XSS via javascript:,
+	// data:, or other dangerous URI schemes when rendered as clickable links.
+	if uParsed.Scheme != "http" && uParsed.Scheme != "https" {
 		return u, ErrValidationURLFormat
 	}
 

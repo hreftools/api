@@ -15,7 +15,8 @@ var (
 	ErrValidationDescriptionLength = errors.New("description must be less than 512 characters")
 
 	// validation url
-	ErrValidationURLFormat = errors.New("url is invalid")
+	ErrValidationURLFormat    = errors.New("url is invalid")
+	ErrValidationURLTooLong   = errors.New("url must be at most 2048 characters")
 
 	// validation favourite
 	ErrValidationFavouriteRequired = errors.New("favourite field is required")

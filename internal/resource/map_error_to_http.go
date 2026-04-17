@@ -20,6 +20,7 @@ func MapErrorToHTTP(err error) (int, string) {
 	if errors.Is(err, ErrValidationTitleLength) ||
 		errors.Is(err, ErrValidationDescriptionLength) ||
 		errors.Is(err, ErrValidationURLFormat) ||
+		errors.Is(err, ErrValidationURLTooLong) ||
 		errors.Is(err, ErrValidationFavouriteRequired) ||
 		errors.Is(err, ErrValidationReadLaterRequired) {
 		return http.StatusBadRequest, err.Error()
