@@ -2,15 +2,19 @@ package user
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/subtle"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/hreftools/api/internal/config"
 	"github.com/hreftools/api/internal/emails"
-	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/crypto/argon2"
 )
 
 type CreateParams struct {
@@ -70,17 +74,138 @@ type TokenRepository interface {
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
+// Argon2id configuration parameters (OWASP recommended minimums).
+//
+// Argon2id is a memory-hard password hashing algorithm — the winner of the
+// Password Hashing Competition (2015). "Memory-hard" means it deliberately
+// uses a large amount of RAM during hashing, which makes it extremely
+// expensive to attack with GPUs or ASICs (which have limited per-core memory).
+//
+// The "id" variant combines Argon2i (resistant to side-channel attacks) and
+// Argon2d (resistant to GPU cracking), making it the recommended choice for
+// password hashing.
+//
+// Unlike bcrypt, Argon2id has no input length limit — bcrypt silently
+// truncates passwords at 72 bytes, which means two passwords that share
+// the first 72 bytes but differ after that would hash identically.
+const (
+	// argonMemory is the amount of RAM (in KiB) used during hashing.
+	// 64 * 1024 = 65536 KiB = 64 MB. Higher values make brute-force attacks
+	// more expensive because each hash attempt must allocate this much memory.
+	argonMemory = 64 * 1024
+
+	// argonIterations (also called "time cost") is the number of passes over
+	// the memory. More iterations = slower hashing = harder to brute-force.
+	// With 64 MB of memory, 1 iteration is sufficient per OWASP guidelines.
+	argonIterations = 1
+
+	// argonParallel is the number of threads used during hashing. This should
+	// match the number of CPU cores you can dedicate to a single hash operation.
+	// Set to 2 as a reasonable default for most server environments.
+	argonParallel = 2
+
+	// argonKeyLength is the length of the derived key (hash output) in bytes.
+	// 32 bytes = 256 bits, which provides strong collision resistance.
+	argonKeyLength = 32
+
+	// argonSaltLength is the length of the random salt in bytes. Each password
+	// gets a unique salt, so even identical passwords produce different hashes.
+	// 16 bytes = 128 bits, which is more than sufficient to prevent rainbow
+	// table attacks and precomputation.
+	argonSaltLength = 16
+)
+
+// passwordHash generates an Argon2id hash for the given password.
+//
+// It returns a self-describing string in the PHC (Password Hashing Competition)
+// format: $argon2id$v=<version>$m=<memory>,t=<iterations>,p=<parallelism>$<salt>$<key>
+//
+// Storing the parameters alongside the hash means you can change the cost
+// parameters in the future (e.g. increase memory) without breaking existing
+// hashes — each hash carries the exact parameters needed to verify it.
 func passwordHash(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+	// Generate a cryptographically random salt. Each password gets its own
+	// unique salt so that two users with the same password will have
+	// completely different hashes (prevents rainbow table attacks).
+	salt := make([]byte, argonSaltLength)
+	if _, err := rand.Read(salt); err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+
+	// Derive the hash key from the password and salt using Argon2id.
+	// IDKey is the Argon2id variant — it takes the password, salt, and all
+	// cost parameters, then returns a fixed-length derived key.
+	key := argon2.IDKey([]byte(password), salt, argonIterations, argonMemory, argonParallel, argonKeyLength)
+
+	// Encode the hash in PHC string format. Both salt and key are
+	// base64-encoded (RawStdEncoding = no padding characters).
+	// This format is widely understood by password hashing libraries
+	// across languages, making it portable if you ever need to migrate.
+	return fmt.Sprintf("$argon2id$v=%d$m=%d,t=%d,p=%d$%s$%s",
+		argon2.Version,
+		argonMemory,
+		argonIterations,
+		argonParallel,
+		base64.RawStdEncoding.EncodeToString(salt),
+		base64.RawStdEncoding.EncodeToString(key),
+	), nil
 }
 
+// passwordValidate checks whether a plaintext password matches a stored
+// Argon2id hash. It parses the parameters, salt, and expected key from
+// the stored hash string, then re-derives the key from the candidate
+// password using the same parameters. If the derived key matches the
+// stored key, the password is correct.
 func passwordValidate(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+	// Parse the stored hash string to extract the algorithm parameters,
+	// salt, and expected key. Sscanf reads structured data from a string
+	// using a format template — each %d/%s maps to one of the variables.
+	// The salt and key are in the last two $-separated segments, but Sscanf's
+	// %s is greedy and captures both (including the $ between them), so we
+	// split them manually below.
+	var version int
+	var memory uint32
+	var iterations uint32
+	var parallelism uint8
+	var saltB64, keyB64 string
+
+	_, err := fmt.Sscanf(hash, "$argon2id$v=%d$m=%d,t=%d,p=%d$%s",
+		&version, &memory, &iterations, &parallelism, &saltB64)
+	if err != nil {
+		return false
+	}
+
+	// Sscanf's %s captured "salt$key" as one string because %s reads until
+	// whitespace, not until $. Split on the first $ to separate them.
+	parts := strings.SplitN(saltB64, "$", 2)
+	if len(parts) != 2 {
+		return false
+	}
+	saltB64 = parts[0]
+	keyB64 = parts[1]
+
+	// Decode the base64-encoded salt and expected key back into raw bytes.
+	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
+	if err != nil {
+		return false
+	}
+	expectedKey, err := base64.RawStdEncoding.DecodeString(keyB64)
+	if err != nil {
+		return false
+	}
+
+	// Re-derive the key from the candidate password using the same salt and
+	// parameters that were used during hashing. If the password is correct,
+	// this will produce the exact same key bytes.
+	key := argon2.IDKey([]byte(password), salt, iterations, memory, parallelism, uint32(len(expectedKey)))
+
+	// Use constant-time comparison to prevent timing attacks. A naive
+	// byte-by-byte comparison (==) returns early on the first mismatch,
+	// which leaks information about how many leading bytes matched. An
+	// attacker could exploit this timing difference to guess the hash
+	// one byte at a time. ConstantTimeCompare always takes the same
+	// amount of time regardless of where (or whether) the bytes differ.
+	return subtle.ConstantTimeCompare(key, expectedKey) == 1
 }
 
 var (
