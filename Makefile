@@ -23,10 +23,10 @@ clean:
 
 # Run tests
 test:
-	sh -c 'set -a; [ -f .env ] && . .env; set +a; migrate -path ./sql/migrations -database $$TEST_DATABASE_URL up && exec go test ./...'
+	go test ./...
 # Run tests with coverage
 test-coverage:
-	sh -c 'set -a; [ -f .env ] && . .env; set +a; migrate -path ./sql/migrations -database $$TEST_DATABASE_URL up && exec go test -cover ./...'
+	go test -cover ./...
 
 # Install development tools
 install-tools:

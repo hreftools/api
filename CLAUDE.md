@@ -18,7 +18,7 @@ Go HTTP API server (`github.com/hreftools/api`) using Go 1.26.0, the standard li
 make dev              # Live reload via air
 make build port=8080 db_url=... resend_api_key=...  # Build binary
 make run              # Build and run
-make test             # Run migrations + tests (requires TEST_DATABASE_URL in .env)
+make test             # Run tests
 make test-coverage    # Tests with coverage
 make gen              # Regenerate sqlc code
 make install-tools    # Install air, sqlc, migrate
@@ -40,7 +40,11 @@ go test ./internal/user/ -run TestValidateUsername
 | `PORT`           | Yes      | Port the server listens on        |
 | `DATABASE_URL`   | Yes      | PostgreSQL connection string      |
 | `RESEND_API_KEY` | Yes      | Resend API key for sending emails |
-| `TEST_DATABASE_URL` | For tests | PostgreSQL URL for test database |
+| `OTEL_SERVICE_NAME` | No | OpenTelemetry service name |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | No | OTLP exporter endpoint URL |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | No | OTLP protocol (e.g., `http/protobuf`) |
+| `OTEL_RESOURCE_ATTRIBUTES` | No | Additional OTEL resource attributes |
+| `OTEL_EXPORTER_OTLP_HEADERS` | No | Headers for OTLP exporter (e.g., auth tokens) |
 
 ## Architecture
 
