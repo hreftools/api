@@ -88,7 +88,12 @@ func validateToken(token string) (string, error) {
 		return token, ErrValidationTokenRequired
 	}
 
-	if _, err := uuid.Parse(token); err != nil {
+	parsed, err := uuid.Parse(token)
+	if err != nil {
+		return token, ErrValidationTokenFormat
+	}
+
+	if parsed == uuid.Nil {
 		return token, ErrValidationTokenFormat
 	}
 

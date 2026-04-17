@@ -183,6 +183,12 @@ func Test_validateToken(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "token is invalid",
 		},
+		{
+			name:       "Nil UUID is rejected",
+			input:      "00000000-0000-0000-0000-000000000000",
+			wantErr:    true,
+			wantErrMsg: "token is invalid",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
