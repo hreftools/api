@@ -98,6 +98,12 @@ func Test_validatePassword(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "password must be at least 12 characters",
 		},
+		{
+			name:       "Multi-byte characters are counted as characters not bytes",
+			input:      "🔒🔒🔒",
+			wantErr:    true,
+			wantErrMsg: "password must be at least 12 characters",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

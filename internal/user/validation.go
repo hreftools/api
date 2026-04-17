@@ -4,6 +4,7 @@ import (
 	"net/mail"
 	"regexp"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 )
@@ -43,7 +44,11 @@ func validatePassword(p string) (string, error) {
 		return p, ErrValidationPasswordRequired
 	}
 
-	if len(p) < passwordLengthMin {
+	// Use RuneCountInString instead of len to count human-readable characters,
+	// not bytes. Multi-byte characters like emoji (4 bytes) or CJK (3 bytes)
+	// would inflate the byte count and pass a len() check with very few actual
+	// characters of entropy (e.g. 3 emoji = 12 bytes but only 3 characters).
+	if utf8.RuneCountInString(p) < passwordLengthMin {
 		return p, ErrValidationPasswordTooShort
 	}
 
