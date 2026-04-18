@@ -269,15 +269,15 @@ var (
 )
 
 type Service struct {
-	Repo        Repository
+	UserRepo    Repository
 	SessionRepo SessionRepository
 	TokenRepo   TokenRepository
 	EmailSender emails.EmailSender
 }
 
-func NewService(repo Repository, sessionRepo SessionRepository, tokenRepo TokenRepository, emailSender emails.EmailSender) *Service {
+func NewService(userRepo Repository, sessionRepo SessionRepository, tokenRepo TokenRepository, emailSender emails.EmailSender) *Service {
 	return &Service{
-		Repo:        repo,
+		UserRepo:    userRepo,
 		SessionRepo: sessionRepo,
 		TokenRepo:   tokenRepo,
 		EmailSender: emailSender,
@@ -307,7 +307,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
-	_, err = s.Repo.Create(ctx, CreateParams{
+	_, err = s.UserRepo.Create(ctx, CreateParams{
 		Email:                           email,
 		EmailVerified:                   false,
 		EmailVerificationToken:          token,
@@ -363,7 +363,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 		return SigninResult{}, err
 	}
 
-	u, err := s.Repo.GetByEmail(ctx, email)
+	u, err := s.UserRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return SigninResult{}, ErrInvalidCredentials
@@ -399,7 +399,7 @@ func (s *Service) Verify(ctx context.Context, tokenStr string) error {
 	}
 	token, _ := uuid.Parse(tokenStr)
 
-	u, err := s.Repo.GetByEmailVerificationToken(ctx, token)
+	u, err := s.UserRepo.GetByEmailVerificationToken(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -408,7 +408,7 @@ func (s *Service) Verify(ctx context.Context, tokenStr string) error {
 		return ErrTokenExpired
 	}
 
-	_, err = s.Repo.Verify(ctx, u.ID)
+	_, err = s.UserRepo.Verify(ctx, u.ID)
 	return err
 }
 
@@ -420,7 +420,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		return err
 	}
 
-	u, err := s.Repo.GetByEmail(ctx, email)
+	u, err := s.UserRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			// silent success for non-existent emails
@@ -442,7 +442,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
-	_, err = s.Repo.UpdateVerificationToken(ctx, UpdateVerificationTokenParams{
+	_, err = s.UserRepo.UpdateVerificationToken(ctx, UpdateVerificationTokenParams{
 		ID:                              u.ID,
 		EmailVerificationToken:          token,
 		EmailVerificationTokenExpiresAt: &expiresAt,
@@ -483,7 +483,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	if err != nil {
 		return err
 	}
-	u, err := s.Repo.GetByEmail(ctx, email)
+	u, err := s.UserRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			return nil // silent success
@@ -501,7 +501,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
 	expiresAt := time.Now().Add(config.PasswordResetTokenExpiryDuration)
 
-	_, err = s.Repo.UpdatePasswordResetToken(ctx, UpdatePasswordResetTokenParams{
+	_, err = s.UserRepo.UpdatePasswordResetToken(ctx, UpdatePasswordResetTokenParams{
 		ID:                          u.ID,
 		PasswordResetToken:          token,
 		PasswordResetTokenExpiresAt: &expiresAt,
@@ -547,7 +547,7 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 	}
 	token, _ := uuid.Parse(tokenStr)
 
-	u, err := s.Repo.GetByPasswordResetToken(ctx, token)
+	u, err := s.UserRepo.GetByPasswordResetToken(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -561,7 +561,7 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	_, err = s.Repo.ResetPassword(ctx, u.ID, passwordHash)
+	_, err = s.UserRepo.ResetPassword(ctx, u.ID, passwordHash)
 	if err != nil {
 		return err
 	}
@@ -588,12 +588,12 @@ func (s *Service) UpdateSessionExpiresAt(ctx context.Context, params SessionUpda
 
 // GetById retrieves a user by ID.
 func (s *Service) GetById(ctx context.Context, id uuid.UUID) (User, error) {
-	return s.Repo.GetById(ctx, id)
+	return s.UserRepo.GetById(ctx, id)
 }
 
 // List returns all users.
 func (s *Service) List(ctx context.Context) ([]User, error) {
-	return s.Repo.List(ctx)
+	return s.UserRepo.List(ctx)
 }
 
 // AdminCreate creates a new user (admin operation — pre-verified, no email sent).
@@ -623,7 +623,7 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 		return User{}, fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	return s.Repo.Create(ctx, CreateParams{
+	return s.UserRepo.Create(ctx, CreateParams{
 		Email:                           email,
 		EmailVerified:                   true,
 		EmailVerificationToken:          uuid.NullUUID{},
@@ -637,7 +637,7 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 
 // Delete removes a user by ID.
 func (s *Service) Delete(ctx context.Context, id uuid.UUID) (User, error) {
-	return s.Repo.Delete(ctx, id)
+	return s.UserRepo.Delete(ctx, id)
 }
 
 // tokenPrefix is prepended to every generated API token so that leaked tokens
@@ -684,7 +684,7 @@ func (s *Service) TokenCreate(ctx context.Context, userID uuid.UUID, password, d
 		return TokenCreateResult{}, err
 	}
 
-	u, err := s.Repo.GetById(ctx, userID)
+	u, err := s.UserRepo.GetById(ctx, userID)
 	if err != nil {
 		return TokenCreateResult{}, err
 	}

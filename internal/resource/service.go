@@ -17,9 +17,9 @@ var (
 	ErrValidationDescriptionInvalidCharacters = errors.New("description must not contain control characters")
 
 	// validation url
-	ErrValidationURLFormat    = errors.New("url is invalid")
-	ErrValidationURLTooLong   = errors.New("url must be at most 2048 characters")
-	ErrValidationURLPrivate   = errors.New("url must not point to a private or local address")
+	ErrValidationURLFormat  = errors.New("url is invalid")
+	ErrValidationURLTooLong = errors.New("url must be at most 2048 characters")
+	ErrValidationURLPrivate = errors.New("url must not point to a private or local address")
 
 	// validation favourite
 	ErrValidationFavouriteRequired = errors.New("favourite field is required")
@@ -59,19 +59,19 @@ type Repository interface {
 }
 
 type Service struct {
-	Repo Repository
+	ResourceRepo Repository
 }
 
 func NewService(repo Repository) *Service {
-	return &Service{Repo: repo}
+	return &Service{ResourceRepo: repo}
 }
 
 func (s *Service) List(ctx context.Context, userID uuid.UUID) ([]Resource, error) {
-	return s.Repo.List(ctx, userID)
+	return s.ResourceRepo.List(ctx, userID)
 }
 
 func (s *Service) Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Resource, error) {
-	return s.Repo.Get(ctx, id, userID)
+	return s.ResourceRepo.Get(ctx, id, userID)
 }
 
 type CreateParamsService struct {
@@ -113,7 +113,7 @@ func (s *Service) Create(ctx context.Context, params CreateParamsService) (Resou
 		Favourite:   favourite,
 		ReadLater:   readLater,
 	}
-	return s.Repo.Create(ctx, repoParams)
+	return s.ResourceRepo.Create(ctx, repoParams)
 }
 
 type UpdateParamsService struct {
@@ -157,9 +157,9 @@ func (s *Service) Update(ctx context.Context, params UpdateParamsService) (Resou
 		Favourite:   favourite,
 		ReadLater:   readLater,
 	}
-	return s.Repo.Update(ctx, repoParams)
+	return s.ResourceRepo.Update(ctx, repoParams)
 }
 
 func (s *Service) Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Resource, error) {
-	return s.Repo.Delete(ctx, id, userID)
+	return s.ResourceRepo.Delete(ctx, id, userID)
 }
