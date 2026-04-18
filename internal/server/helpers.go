@@ -92,6 +92,24 @@ func newResponseUserAdmin(u user.User) responseUserAdmin {
 	}
 }
 
+type responseToken struct {
+	ID          uuid.UUID `json:"id"`
+	Description string    `json:"description"`
+	LastUsedAt  time.Time `json:"lastUsedAt"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func newResponseToken(t user.Token) responseToken {
+	return responseToken{
+		ID:          t.ID,
+		Description: t.Description,
+		LastUsedAt:  t.LastUsedAt,
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
+	}
+}
+
 // Request helpers
 
 func resolveSessionID(r *http.Request) (uuid.UUID, bool) {

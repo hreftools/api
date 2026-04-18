@@ -37,6 +37,13 @@ func New(port string, userSvc *user.Service, resourceSvc *resource.Service) *htt
 	mux.Handle("POST /users", adminOnly(handleUsersCreate(userSvc)))
 	mux.Handle("DELETE /users/{id}", adminOnly(handleUsersDelete(userSvc)))
 
+	// tokens (authenticated, session-only)
+	mux.Handle("POST /tokens", auth(handleTokensCreate(userSvc)))
+	mux.Handle("GET /tokens", auth(handleTokensList(userSvc)))
+	mux.Handle("GET /tokens/{id}", auth(handleTokensGet(userSvc)))
+	mux.Handle("DELETE /tokens/{id}", auth(handleTokensDelete(userSvc)))
+	mux.Handle("DELETE /tokens", auth(handleTokensDeleteAll(userSvc)))
+
 	// auth
 	mux.HandleFunc("POST /auth/signup", handleAuthSignup(userSvc))
 	mux.HandleFunc("POST /auth/signin", handleAuthSignin(userSvc))
