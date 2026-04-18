@@ -30,3 +30,13 @@ type Session struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
+
+type Token struct {
+	ID          uuid.UUID
+	UserID      uuid.UUID
+	Description string
+	Hash        string
+	LastUsedAt  time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}

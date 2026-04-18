@@ -216,6 +216,22 @@ func validateUsername(u string) (string, error) {
 	return u, nil
 }
 
+const tokenDescriptionLengthMax = 255
+
+func validateTokenDescription(d string) (string, error) {
+	d = strings.TrimSpace(d)
+
+	if len(d) == 0 {
+		return d, ErrValidationTokenDescriptionRequired
+	}
+
+	if utf8.RuneCountInString(d) > tokenDescriptionLengthMax {
+		return d, ErrValidationTokenDescriptionTooLong
+	}
+
+	return d, nil
+}
+
 func validateIsAdmin(isAdmin *bool) (bool, error) {
 	if isAdmin == nil {
 		return false, ErrValidationIsAdminRequired

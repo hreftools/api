@@ -33,7 +33,9 @@ func MapErrorToHTTP(err error) (int, string) {
 		errors.Is(err, ErrValidationTokenRequired) ||
 		errors.Is(err, ErrValidationTokenFormat) ||
 		errors.Is(err, ErrValidationIsAdminRequired) ||
-		errors.Is(err, ErrValidationIsProRequired) {
+		errors.Is(err, ErrValidationIsProRequired) ||
+		errors.Is(err, ErrValidationTokenDescriptionRequired) ||
+		errors.Is(err, ErrValidationTokenDescriptionTooLong) {
 		return http.StatusBadRequest, err.Error()
 	}
 

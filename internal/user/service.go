@@ -3,8 +3,10 @@ package user
 import (
 	"context"
 	"crypto/rand"
+	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"log"
@@ -70,6 +72,22 @@ type SessionRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (Session, error)
 	UpdateExpiresAt(ctx context.Context, params SessionUpdateExpiresAtParams) (Session, error)
 	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
+}
+
+type TokenCreateParams struct {
+	UserID      uuid.UUID
+	Description string
+	Hash        string
+}
+
+type TokenRepository interface {
+	Create(ctx context.Context, params TokenCreateParams) (Token, error)
+	GetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Token, error)
+	GetByHash(ctx context.Context, hash string) (Token, error)
+	List(ctx context.Context, userID uuid.UUID) ([]Token, error)
+	UpdateLastUsedAt(ctx context.Context, id uuid.UUID) error
+	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -237,6 +255,10 @@ var (
 	// validation is pro
 	ErrValidationIsProRequired = errors.New("isPro flag is required")
 
+	// validation api token description
+	ErrValidationTokenDescriptionRequired = errors.New("token description is required")
+	ErrValidationTokenDescriptionTooLong  = errors.New("token description must be at most 255 characters")
+
 	ErrNotFound                 = errors.New("not found")
 	ErrConflict                 = errors.New("conflict")
 	ErrInvalidCredentials       = errors.New("invalid email or password")
@@ -249,13 +271,15 @@ var (
 type Service struct {
 	Repo        Repository
 	SessionRepo SessionRepository
+	TokenRepo   TokenRepository
 	EmailSender emails.EmailSender
 }
 
-func NewService(repo Repository, sessionRepo SessionRepository, emailSender emails.EmailSender) *Service {
+func NewService(repo Repository, sessionRepo SessionRepository, tokenRepo TokenRepository, emailSender emails.EmailSender) *Service {
 	return &Service{
 		Repo:        repo,
 		SessionRepo: sessionRepo,
+		TokenRepo:   tokenRepo,
 		EmailSender: emailSender,
 	}
 }
@@ -614,4 +638,104 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 // Delete removes a user by ID.
 func (s *Service) Delete(ctx context.Context, id uuid.UUID) (User, error) {
 	return s.Repo.Delete(ctx, id)
+}
+
+// tokenPrefix is prepended to every generated API token so that leaked tokens
+// can be identified and traced back to this service (e.g. by secret scanners).
+const tokenPrefix = "yp_"
+
+// tokenRandomBytes is the number of cryptographically random bytes used to
+// generate the random part of an API token. 32 bytes = 256 bits of entropy,
+// which is more than sufficient to prevent brute-force guessing.
+const tokenRandomBytes = 32
+
+// generateToken creates a new API token in the format "yp_<random>", where
+// <random> is a base64url-encoded string derived from 32 random bytes.
+func generateToken() (string, error) {
+	b := make([]byte, tokenRandomBytes)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return tokenPrefix + base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// hashToken produces a SHA-256 hex digest of the given token. SHA-256 is
+// appropriate here (unlike passwords) because API tokens are high-entropy
+// random strings that cannot be brute-forced — a fast hash is sufficient.
+func hashToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
+
+type TokenCreateResult struct {
+	RawToken string
+}
+
+// TokenCreate generates a new API token for the user after verifying their
+// password. The raw token is returned once and never stored — only its
+// SHA-256 hash is persisted.
+func (s *Service) TokenCreate(ctx context.Context, userID uuid.UUID, password, description string) (TokenCreateResult, error) {
+	password, err := validatePassword(password)
+	if err != nil {
+		return TokenCreateResult{}, err
+	}
+	description, err = validateTokenDescription(description)
+	if err != nil {
+		return TokenCreateResult{}, err
+	}
+
+	u, err := s.Repo.GetById(ctx, userID)
+	if err != nil {
+		return TokenCreateResult{}, err
+	}
+
+	if !passwordValidate(password, u.Password) {
+		return TokenCreateResult{}, ErrInvalidCredentials
+	}
+
+	rawToken, err := generateToken()
+	if err != nil {
+		return TokenCreateResult{}, fmt.Errorf("failed to generate token: %w", err)
+	}
+
+	_, err = s.TokenRepo.Create(ctx, TokenCreateParams{
+		UserID:      userID,
+		Description: description,
+		Hash:        hashToken(rawToken),
+	})
+	if err != nil {
+		return TokenCreateResult{}, err
+	}
+
+	return TokenCreateResult{RawToken: rawToken}, nil
+}
+
+// TokenList returns all API tokens for the given user.
+func (s *Service) TokenList(ctx context.Context, userID uuid.UUID) ([]Token, error) {
+	return s.TokenRepo.List(ctx, userID)
+}
+
+// TokenGetByID retrieves a single API token by ID, scoped to the given user.
+func (s *Service) TokenGetByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Token, error) {
+	return s.TokenRepo.GetByID(ctx, id, userID)
+}
+
+// TokenDelete removes a single API token by ID, scoped to the given user.
+func (s *Service) TokenDelete(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	return s.TokenRepo.Delete(ctx, id, userID)
+}
+
+// TokenDeleteAll removes all API tokens for the given user.
+func (s *Service) TokenDeleteAll(ctx context.Context, userID uuid.UUID) error {
+	return s.TokenRepo.DeleteAllByUserID(ctx, userID)
+}
+
+// GetTokenByHash retrieves a token by its hash (used by auth middleware).
+func (s *Service) GetTokenByHash(ctx context.Context, rawToken string) (Token, error) {
+	return s.TokenRepo.GetByHash(ctx, hashToken(rawToken))
+}
+
+// UpdateTokenLastUsedAt updates the last_used_at timestamp (used by auth middleware).
+func (s *Service) UpdateTokenLastUsedAt(ctx context.Context, id uuid.UUID) error {
+	return s.TokenRepo.UpdateLastUsedAt(ctx, id)
 }
