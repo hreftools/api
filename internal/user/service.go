@@ -348,6 +348,18 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	return nil
 }
 
+// dummyHash is a pre-computed Argon2id hash used to prevent timing-based user
+// enumeration. When a sign-in attempt uses an unknown email, we still run the
+// hash computation against this dummy so the response time is indistinguishable
+// from a wrong-password attempt.
+var dummyHash = func() string {
+	h, err := passwordHash("dummy-password-never-matches")
+	if err != nil {
+		panic("failed to generate dummy hash: " + err.Error())
+	}
+	return h
+}()
+
 type SigninResult struct {
 	Session Session
 }
@@ -366,6 +378,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 	u, err := s.UserRepo.GetByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
+			passwordValidate(password, dummyHash) // prevent timing-based user enumeration
 			return SigninResult{}, ErrInvalidCredentials
 		}
 		return SigninResult{}, err
