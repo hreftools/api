@@ -117,9 +117,10 @@ func validateReadLater(r *bool) (bool, error) {
 // (e.g. link previews, favicons) and to avoid unsafe links in shared collections.
 func isPrivateHost(host string) bool {
 	h := host
-	if strings.Contains(host, ":") {
-		h, _, _ = net.SplitHostPort(host)
+	if hostOnly, _, err := net.SplitHostPort(host); err == nil {
+		h = hostOnly
 	}
+	h = strings.Trim(h, "[]")
 
 	if strings.EqualFold(h, "localhost") {
 		return true
