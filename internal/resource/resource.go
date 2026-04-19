@@ -12,8 +12,6 @@ type Resource struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   bool
-	ReadLater   bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

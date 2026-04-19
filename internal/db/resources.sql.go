@@ -13,11 +13,11 @@ import (
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources (
-    user_id, title, description, url, favourite, read_later
+    user_id, title, description, url
 ) VALUES (
-    $1, $2, $3, $4, $5, $6
+    $1, $2, $3, $4
 )
-RETURNING id, user_id, title, description, url, favourite, read_later, created_at, updated_at
+RETURNING id, user_id, title, description, url, created_at, updated_at
 `
 
 type CreateResourceParams struct {
@@ -25,8 +25,6 @@ type CreateResourceParams struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   bool
-	ReadLater   bool
 }
 
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
@@ -35,8 +33,6 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		arg.Title,
 		arg.Description,
 		arg.Url,
-		arg.Favourite,
-		arg.ReadLater,
 	)
 	var i Resource
 	err := row.Scan(
@@ -45,8 +41,6 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
-		&i.Favourite,
-		&i.ReadLater,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -56,7 +50,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 const deleteResource = `-- name: DeleteResource :one
 DELETE FROM resources
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, url, favourite, read_later, created_at, updated_at
+RETURNING id, user_id, title, description, url, created_at, updated_at
 `
 
 type DeleteResourceParams struct {
@@ -73,8 +67,6 @@ func (q *Queries) DeleteResource(ctx context.Context, arg DeleteResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
-		&i.Favourite,
-		&i.ReadLater,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -82,7 +74,7 @@ func (q *Queries) DeleteResource(ctx context.Context, arg DeleteResourceParams) 
 }
 
 const getResource = `-- name: GetResource :one
-SELECT id, user_id, title, description, url, favourite, read_later, created_at, updated_at FROM resources
+SELECT id, user_id, title, description, url, created_at, updated_at FROM resources
 WHERE
     id = $1 AND user_id = $2
 LIMIT 1
@@ -102,8 +94,6 @@ func (q *Queries) GetResource(ctx context.Context, arg GetResourceParams) (Resou
 		&i.Title,
 		&i.Description,
 		&i.Url,
-		&i.Favourite,
-		&i.ReadLater,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -111,7 +101,7 @@ func (q *Queries) GetResource(ctx context.Context, arg GetResourceParams) (Resou
 }
 
 const listResources = `-- name: ListResources :many
-SELECT id, user_id, title, description, url, favourite, read_later, created_at, updated_at FROM resources
+SELECT id, user_id, title, description, url, created_at, updated_at FROM resources
 WHERE user_id = $1
 ORDER BY created_at
 `
@@ -131,8 +121,6 @@ func (q *Queries) ListResources(ctx context.Context, userID uuid.UUID) ([]Resour
 			&i.Title,
 			&i.Description,
 			&i.Url,
-			&i.Favourite,
-			&i.ReadLater,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -154,11 +142,9 @@ UPDATE resources
 SET
     title = $3,
     description = $4,
-    url = $5,
-    favourite = $6,
-    read_later = $7
+    url = $5
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, url, favourite, read_later, created_at, updated_at
+RETURNING id, user_id, title, description, url, created_at, updated_at
 `
 
 type UpdateResourceParams struct {
@@ -167,8 +153,6 @@ type UpdateResourceParams struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   bool
-	ReadLater   bool
 }
 
 func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) (Resource, error) {
@@ -178,8 +162,6 @@ func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) 
 		arg.Title,
 		arg.Description,
 		arg.Url,
-		arg.Favourite,
-		arg.ReadLater,
 	)
 	var i Resource
 	err := row.Scan(
@@ -188,8 +170,6 @@ func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
-		&i.Favourite,
-		&i.ReadLater,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

@@ -37,8 +37,6 @@ func toResource(r db.Resource) resource.Resource {
 		Title:       r.Title,
 		Description: r.Description,
 		Url:         r.Url,
-		Favourite:   r.Favourite,
-		ReadLater:   r.ReadLater,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}
@@ -74,8 +72,6 @@ func (r *ResourceRepository) Create(ctx context.Context, params resource.CreateP
 		Title:       params.Title,
 		Description: params.Description,
 		Url:         params.Url,
-		Favourite:   params.Favourite,
-		ReadLater:   params.ReadLater,
 	}
 	row, err := r.queries.CreateResource(ctx, args)
 	if err != nil {
@@ -91,8 +87,6 @@ func (r *ResourceRepository) Update(ctx context.Context, params resource.UpdateP
 		Title:       params.Title,
 		Description: params.Description,
 		Url:         params.Url,
-		Favourite:   params.Favourite,
-		ReadLater:   params.ReadLater,
 	}
 	row, err := r.queries.UpdateResource(ctx, args)
 	if err != nil {

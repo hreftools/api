@@ -95,22 +95,6 @@ func validateURL(u string) (string, error) {
 	return uParsed.String(), nil
 }
 
-func validateFavourite(f *bool) (bool, error) {
-	if f == nil {
-		return false, ErrValidationFavouriteRequired
-	}
-
-	return *f, nil
-}
-
-func validateReadLater(r *bool) (bool, error) {
-	if r == nil {
-		return false, ErrValidationReadLaterRequired
-	}
-
-	return *r, nil
-}
-
 // isPrivateHost checks whether a host (with optional port) resolves to a
 // loopback, private (RFC 1918), link-local, or IPv6 unique local address.
 // These are blocked to prevent SSRF if the backend ever fetches stored URLs

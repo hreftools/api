@@ -19,8 +19,6 @@ type responseResource struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
-	Favourite   bool      `json:"favourite"`
-	ReadLater   bool      `json:"readLater"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -31,8 +29,6 @@ func newResponseResource(r resource.Resource) responseResource {
 		Title:       r.Title,
 		Description: r.Description,
 		URL:         r.Url,
-		Favourite:   r.Favourite,
-		ReadLater:   r.ReadLater,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}

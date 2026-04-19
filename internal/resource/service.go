@@ -21,12 +21,6 @@ var (
 	ErrValidationURLTooLong = errors.New("url must be at most 2048 characters")
 	ErrValidationURLPrivate = errors.New("url must not point to a private or local address")
 
-	// validation favourite
-	ErrValidationFavouriteRequired = errors.New("favourite field is required")
-
-	// validation read later
-	ErrValidationReadLaterRequired = errors.New("readLater field is required")
-
 	ErrNotFound = errors.New("not found")
 	ErrConflict = errors.New("conflict")
 )
@@ -36,8 +30,6 @@ type CreateParams struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   bool
-	ReadLater   bool
 }
 
 type UpdateParams struct {
@@ -46,8 +38,6 @@ type UpdateParams struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   bool
-	ReadLater   bool
 }
 
 type Repository interface {
@@ -79,8 +69,6 @@ type CreateParamsService struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   *bool
-	ReadLater   *bool
 }
 
 func (s *Service) Create(ctx context.Context, params CreateParamsService) (Resource, error) {
@@ -96,22 +84,12 @@ func (s *Service) Create(ctx context.Context, params CreateParamsService) (Resou
 	if err != nil {
 		return Resource{}, err
 	}
-	favourite, err := validateFavourite(params.Favourite)
-	if err != nil {
-		return Resource{}, err
-	}
-	readLater, err := validateReadLater(params.ReadLater)
-	if err != nil {
-		return Resource{}, err
-	}
 
 	repoParams := CreateParams{
 		UserID:      params.UserID,
 		Title:       title,
 		Description: description,
 		Url:         url,
-		Favourite:   favourite,
-		ReadLater:   readLater,
 	}
 	return s.ResourceRepo.Create(ctx, repoParams)
 }
@@ -122,8 +100,6 @@ type UpdateParamsService struct {
 	Title       string
 	Description string
 	Url         string
-	Favourite   *bool
-	ReadLater   *bool
 }
 
 func (s *Service) Update(ctx context.Context, params UpdateParamsService) (Resource, error) {
@@ -139,14 +115,6 @@ func (s *Service) Update(ctx context.Context, params UpdateParamsService) (Resou
 	if err != nil {
 		return Resource{}, err
 	}
-	favourite, err := validateFavourite(params.Favourite)
-	if err != nil {
-		return Resource{}, err
-	}
-	readLater, err := validateReadLater(params.ReadLater)
-	if err != nil {
-		return Resource{}, err
-	}
 
 	repoParams := UpdateParams{
 		ID:          params.ID,
@@ -154,8 +122,6 @@ func (s *Service) Update(ctx context.Context, params UpdateParamsService) (Resou
 		Title:       title,
 		Description: description,
 		Url:         url,
-		Favourite:   favourite,
-		ReadLater:   readLater,
 	}
 	return s.ResourceRepo.Update(ctx, repoParams)
 }

@@ -11,8 +11,6 @@ type resourceCreateBody struct {
 	Title       string `json:"title"`
 	URL         string `json:"url"`
 	Description string `json:"description"`
-	Favourite   *bool  `json:"favourite"`
-	ReadLater   *bool  `json:"readLater"`
 }
 
 type resourceCreateResponse struct {
@@ -37,8 +35,6 @@ func handleResourcesCreate(svc *resource.Service) http.HandlerFunc {
 			Title:       body.Title,
 			Url:         body.URL,
 			Description: body.Description,
-			Favourite:   body.Favourite,
-			ReadLater:   body.ReadLater,
 		}
 		rr, err := svc.Create(r.Context(), params)
 		if err != nil {
