@@ -675,14 +675,14 @@ func (s *Service) DeleteSelf(ctx context.Context, userID uuid.UUID, password str
 
 // tokenPrefix is prepended to every generated API token so that leaked tokens
 // can be identified and traced back to this service (e.g. by secret scanners).
-const tokenPrefix = "yp_"
+const tokenPrefix = "urlspace_"
 
 // tokenRandomBytes is the number of cryptographically random bytes used to
 // generate the random part of an API token. 32 bytes = 256 bits of entropy,
 // which is more than sufficient to prevent brute-force guessing.
 const tokenRandomBytes = 32
 
-// generateToken creates a new API token in the format "yp_<random>", where
+// generateToken creates a new API token in the format "urlspace_<random>", where
 // <random> is a base64url-encoded string derived from 32 random bytes.
 func generateToken() (string, error) {
 	b := make([]byte, tokenRandomBytes)
