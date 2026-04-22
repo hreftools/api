@@ -22,11 +22,11 @@ var AuthResendVerificationTemplateTxt string
 type AuthSignupParams struct {
 	Username string
 	Email    string
-	Token    string
+	Url      string
 }
 
 type AuthResendVerificationParams struct {
-	Token string
+	Url string
 }
 
 //go:embed templates/auth-reset-password-request.html
@@ -36,7 +36,7 @@ var AuthResetPasswordRequestTemplateHtml string
 var AuthResetPasswordRequestTemplateTxt string
 
 type AuthResetPasswordRequestParams struct {
-	Token string
+	Url string
 }
 
 func RenderTemplateHtml(template string, data any) (string, error) {

@@ -2,5 +2,5 @@ Welcome to url.space!
 
 Your username: {{.Username}}
 Your email: {{.Email}}
-Please verify your email using the following token: https://url.space/auth/verify?token={{.Token}}
+Please verify your email using the following link: {{.Url}}
 This token will expire in 24 hours.

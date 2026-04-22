@@ -3,11 +3,9 @@
   <body>
     <h1>New verification link!</h1>
     <ul>
-      <li>Please verify your email using the following token:</li>
+      <li>Please verify your email using the following link:</li>
       <li>
-        <a href="https://url.space/verify?token={{.Token}}"
-          >https://url.space/verify?token={{.Token}}</a
-        >
+        <a href="{{.Url}}">{{.Url}}</a>
       </li>
       <li>This token will expire in 24 hours.</li>
     </ul>

@@ -72,7 +72,7 @@ func run(ctx context.Context) error {
 	resendClient := resend.NewClient(cfg.ResendAPIKey)
 	emailSender := emails.NewResendEmailSender(resendClient)
 
-	userSvc := user.NewService(userRepo, sessionRepo, tokenRepo, emailSender)
+	userSvc := user.NewService(userRepo, sessionRepo, tokenRepo, emailSender, cfg.AppURL)
 	resourceSvc := resource.NewService(resourceRepo)
 
 	tp, err := initTracer(ctx)

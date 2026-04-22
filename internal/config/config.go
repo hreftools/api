@@ -23,6 +23,7 @@ type Config struct {
 	Port         string
 	DatabaseURL  string
 	ResendAPIKey string
+	AppURL       string
 }
 
 func LoadConfig() (*Config, error) {
@@ -30,6 +31,7 @@ func LoadConfig() (*Config, error) {
 		Port:         os.Getenv("PORT"),
 		DatabaseURL:  os.Getenv("DATABASE_URL"),
 		ResendAPIKey: os.Getenv("RESEND_API_KEY"),
+		AppURL:       os.Getenv("APP_URL"),
 	}
 
 	var missing []string
@@ -42,6 +44,9 @@ func LoadConfig() (*Config, error) {
 	}
 	if cfg.ResendAPIKey == "" {
 		missing = append(missing, "RESEND_API_KEY")
+	}
+	if cfg.AppURL == "" {
+		missing = append(missing, "APP_URL")
 	}
 
 	if len(missing) > 0 {

@@ -247,10 +247,10 @@ var (
 	ErrValidationPasswordTooLong  = errors.New("password must be at most 128 characters")
 
 	// validation display name
-	ErrValidationDisplayNameRequired         = errors.New("display name is required")
-	ErrValidationDisplayNameTooShort         = errors.New("display name must be min 3 characters")
-	ErrValidationDisplayNameTooLong          = errors.New("display name must be max 32 characters")
-	ErrValidationDisplayNameCharacters       = errors.New("display name can only contain letters, numbers, spaces, hyphens, and underscores")
+	ErrValidationDisplayNameRequired          = errors.New("display name is required")
+	ErrValidationDisplayNameTooShort          = errors.New("display name must be min 3 characters")
+	ErrValidationDisplayNameTooLong           = errors.New("display name must be max 32 characters")
+	ErrValidationDisplayNameCharacters        = errors.New("display name can only contain letters, numbers, spaces, hyphens, and underscores")
 	ErrValidationDisplayNameConsecutiveSpaces = errors.New("display name cannot contain consecutive spaces")
 
 	// validation token
@@ -281,14 +281,16 @@ type Service struct {
 	SessionRepo SessionRepository
 	TokenRepo   TokenRepository
 	EmailSender emails.EmailSender
+	AppURL      string
 }
 
-func NewService(userRepo Repository, sessionRepo SessionRepository, tokenRepo TokenRepository, emailSender emails.EmailSender) *Service {
+func NewService(userRepo Repository, sessionRepo SessionRepository, tokenRepo TokenRepository, emailSender emails.EmailSender, appURL string) *Service {
 	return &Service{
 		UserRepo:    userRepo,
 		SessionRepo: sessionRepo,
 		TokenRepo:   tokenRepo,
 		EmailSender: emailSender,
+		AppURL:      appURL,
 	}
 }
 
@@ -333,7 +335,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	emailVerifyData := emails.AuthSignupParams{
 		Username: username,
 		Email:    email,
-		Token:    token.UUID.String(),
+		Url:      s.AppURL + "/auth/verify?token=" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthSignupTemplateHtml, emailVerifyData)
 	if err != nil {
@@ -474,7 +476,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 	}
 
 	templateParams := emails.AuthResendVerificationParams{
-		Token: token.UUID.String(),
+		Url: s.AppURL + "/auth/verify?token=" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResendVerificationTemplateHtml, templateParams)
 	if err != nil {
@@ -533,7 +535,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	}
 
 	templateParams := emails.AuthResetPasswordRequestParams{
-		Token: token.UUID.String(),
+		Url: s.AppURL + "/auth/reset-password?token=" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResetPasswordRequestTemplateHtml, templateParams)
 	if err != nil {
