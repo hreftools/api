@@ -24,7 +24,7 @@ type CreateTokenParams struct {
 }
 
 func (q *Queries) CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error) {
-	row := q.db.QueryRowContext(ctx, createToken, arg.UserID, arg.Description, arg.Hash)
+	row := q.db.QueryRow(ctx, createToken, arg.UserID, arg.Description, arg.Hash)
 	var i Token
 	err := row.Scan(
 		&i.ID,
@@ -49,7 +49,7 @@ type DeleteTokenParams struct {
 }
 
 func (q *Queries) DeleteToken(ctx context.Context, arg DeleteTokenParams) error {
-	_, err := q.db.ExecContext(ctx, deleteToken, arg.ID, arg.UserID)
+	_, err := q.db.Exec(ctx, deleteToken, arg.ID, arg.UserID)
 	return err
 }
 
@@ -59,7 +59,7 @@ WHERE user_id = $1
 `
 
 func (q *Queries) DeleteTokensByUserID(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteTokensByUserID, userID)
+	_, err := q.db.Exec(ctx, deleteTokensByUserID, userID)
 	return err
 }
 
@@ -70,7 +70,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetTokenByHash(ctx context.Context, hash string) (Token, error) {
-	row := q.db.QueryRowContext(ctx, getTokenByHash, hash)
+	row := q.db.QueryRow(ctx, getTokenByHash, hash)
 	var i Token
 	err := row.Scan(
 		&i.ID,
@@ -96,7 +96,7 @@ type GetTokenByIdParams struct {
 }
 
 func (q *Queries) GetTokenById(ctx context.Context, arg GetTokenByIdParams) (Token, error) {
-	row := q.db.QueryRowContext(ctx, getTokenById, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getTokenById, arg.ID, arg.UserID)
 	var i Token
 	err := row.Scan(
 		&i.ID,
@@ -117,7 +117,7 @@ ORDER BY created_at DESC
 `
 
 func (q *Queries) ListTokensByUserID(ctx context.Context, userID uuid.UUID) ([]Token, error) {
-	rows, err := q.db.QueryContext(ctx, listTokensByUserID, userID)
+	rows, err := q.db.Query(ctx, listTokensByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -138,9 +138,6 @@ func (q *Queries) ListTokensByUserID(ctx context.Context, userID uuid.UUID) ([]T
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -154,6 +151,6 @@ WHERE id = $1
 `
 
 func (q *Queries) UpdateTokenLastUsedAt(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, updateTokenLastUsedAt, id)
+	_, err := q.db.Exec(ctx, updateTokenLastUsedAt, id)
 	return err
 }

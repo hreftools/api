@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/urlspace/api/internal/db"
 	"github.com/urlspace/api/internal/resource"
@@ -20,7 +20,7 @@ func NewResourceRepository(queries db.Querier) resource.Repository {
 }
 
 func translateResourceError(err error) error {
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return resource.ErrNotFound
 	}
 	var pgErr *pgconn.PgError
@@ -36,7 +36,7 @@ func toResource(r db.Resource) resource.Resource {
 		UserID:      r.UserID,
 		Title:       r.Title,
 		Description: r.Description,
-		Url:         r.Url,
+		URL:         r.Url,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,
 	}
@@ -71,7 +71,7 @@ func (r *ResourceRepository) Create(ctx context.Context, params resource.CreateP
 		UserID:      params.UserID,
 		Title:       params.Title,
 		Description: params.Description,
-		Url:         params.Url,
+		Url:         params.URL,
 	}
 	row, err := r.queries.CreateResource(ctx, args)
 	if err != nil {
@@ -86,7 +86,7 @@ func (r *ResourceRepository) Update(ctx context.Context, params resource.UpdateP
 		UserID:      params.UserID,
 		Title:       params.Title,
 		Description: params.Description,
-		Url:         params.Url,
+		Url:         params.URL,
 	}
 	row, err := r.queries.UpdateResource(ctx, args)
 	if err != nil {

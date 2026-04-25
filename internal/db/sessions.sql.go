@@ -25,7 +25,7 @@ type CreateSessionParams struct {
 }
 
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, createSession, arg.UserID, arg.Description, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, createSession, arg.UserID, arg.Description, arg.ExpiresAt)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -44,7 +44,7 @@ WHERE id = $1
 `
 
 func (q *Queries) DeleteSession(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteSession, id)
+	_, err := q.db.Exec(ctx, deleteSession, id)
 	return err
 }
 
@@ -54,7 +54,7 @@ WHERE user_id = $1
 `
 
 func (q *Queries) DeleteSessionsByUserID(ctx context.Context, userID uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, deleteSessionsByUserID, userID)
+	_, err := q.db.Exec(ctx, deleteSessionsByUserID, userID)
 	return err
 }
 
@@ -65,7 +65,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetSessionById(ctx context.Context, id uuid.UUID) (Session, error) {
-	row := q.db.QueryRowContext(ctx, getSessionById, id)
+	row := q.db.QueryRow(ctx, getSessionById, id)
 	var i Session
 	err := row.Scan(
 		&i.ID,
@@ -91,7 +91,7 @@ type UpdateSessionExpiresAtParams struct {
 }
 
 func (q *Queries) UpdateSessionExpiresAt(ctx context.Context, arg UpdateSessionExpiresAtParams) (Session, error) {
-	row := q.db.QueryRowContext(ctx, updateSessionExpiresAt, arg.ID, arg.ExpiresAt)
+	row := q.db.QueryRow(ctx, updateSessionExpiresAt, arg.ID, arg.ExpiresAt)
 	var i Session
 	err := row.Scan(
 		&i.ID,

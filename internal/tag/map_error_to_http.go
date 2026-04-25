@@ -1,4 +1,4 @@
-package resource
+package tag
 
 import (
 	"context"
@@ -17,13 +17,10 @@ func MapErrorToHTTP(err error) (int, string) {
 	}
 
 	// validation errors
-	if errors.Is(err, ErrValidationTitleLength) ||
-		errors.Is(err, ErrValidationTitleInvalidCharacters) ||
-		errors.Is(err, ErrValidationDescriptionLength) ||
-		errors.Is(err, ErrValidationDescriptionInvalidCharacters) ||
-		errors.Is(err, ErrValidationURLFormat) ||
-		errors.Is(err, ErrValidationURLTooLong) ||
-		errors.Is(err, ErrValidationURLPrivate) {
+	if errors.Is(err, ErrValidationNameLength) ||
+		errors.Is(err, ErrValidationNameCharacters) ||
+		errors.Is(err, ErrValidationNameHyphens) ||
+		errors.Is(err, ErrValidationTooManyTags) {
 		return http.StatusBadRequest, err.Error()
 	}
 

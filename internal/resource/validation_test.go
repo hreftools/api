@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_validateTitle(t *testing.T) {
+func Test_ValidateTitle(t *testing.T) {
 
 	tests := []struct {
 		name       string
@@ -59,7 +59,7 @@ func Test_validateTitle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, gotErr := validateTitle(tt.input)
+			gotResult, gotErr := ValidateTitle(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("ResourceTitle() failed: %v", gotErr)
@@ -79,7 +79,7 @@ func Test_validateTitle(t *testing.T) {
 	}
 }
 
-func Test_validateDescription(t *testing.T) {
+func Test_ValidateDescription(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
@@ -131,7 +131,7 @@ func Test_validateDescription(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, gotErr := validateDescription(tt.input)
+			gotResult, gotErr := ValidateDescription(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("ResourceDescription() failed: %v", gotErr)
@@ -151,7 +151,7 @@ func Test_validateDescription(t *testing.T) {
 	}
 }
 
-func Test_validateURL(t *testing.T) {
+func Test_ValidateURL(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
@@ -270,7 +270,7 @@ func Test_validateURL(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, gotErr := validateURL(tt.input)
+			gotResult, gotErr := ValidateURL(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Url() failed: %v", gotErr)

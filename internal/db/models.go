@@ -20,6 +20,11 @@ type Resource struct {
 	UpdatedAt   time.Time
 }
 
+type ResourceTag struct {
+	ResourceID uuid.UUID
+	TagID      uuid.UUID
+}
+
 type Session struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
@@ -27,6 +32,14 @@ type Session struct {
 	ExpiresAt   time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type Tag struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type Token struct {

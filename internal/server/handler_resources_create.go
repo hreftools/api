@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/urlspace/api/internal/resource"
+	"github.com/urlspace/api/internal/uow"
 )
 
 type resourceCreateBody struct {
-	Title       string `json:"title"`
-	URL         string `json:"url"`
-	Description string `json:"description"`
+	Title       string   `json:"title"`
+	URL         string   `json:"url"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
 }
 
 type resourceCreateResponse struct {
@@ -18,7 +19,7 @@ type resourceCreateResponse struct {
 	Data   responseResource `json:"data"`
 }
 
-func handleResourcesCreate(svc *resource.Service) http.HandlerFunc {
+func handleResourcesCreate(uowSvc *uow.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := userIDFromContext(r.Context())
 
@@ -30,27 +31,30 @@ func handleResourcesCreate(svc *resource.Service) http.HandlerFunc {
 			return
 		}
 
-		params := resource.CreateParamsService{
+		result, err := uowSvc.CreateResource(r.Context(), uow.CreateResourceParams{
 			UserID:      userID,
 			Title:       body.Title,
 			Url:         body.URL,
 			Description: body.Description,
-		}
-		rr, err := svc.Create(r.Context(), params)
+			Tags:        body.Tags,
+		})
 		if err != nil {
-			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
-		res := &resourceCreateResponse{
+		writeJSONSuccess(w, http.StatusCreated, resourceCreateResponse{
 			Status: "ok",
-			Data:   newResponseResource(rr),
-		}
-
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+			Data: responseResource{
+				ID:          result.ID,
+				Title:       result.Title,
+				Description: result.Description,
+				URL:         result.URL,
+				Tags:        result.Tags,
+				CreatedAt:   result.CreatedAt,
+				UpdatedAt:   result.UpdatedAt,
+			},
+		})
 	}
 }

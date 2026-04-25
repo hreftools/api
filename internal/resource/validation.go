@@ -13,14 +13,17 @@ const (
 	resourceTitleLengthMax = 255
 )
 
-func validateTitle(t string) (string, error) {
+// ValidateTitle is exported because the uow service needs to validate
+// resource fields before writing them within a cross-repository transaction.
+func ValidateTitle(t string) (string, error) {
 	t = strings.TrimSpace(t)
 
 	// Use RuneCountInString instead of len to count human-readable characters,
 	// not bytes. Non-ASCII characters (e.g. Polish ąęł, CJK) are multi-byte
 	// in UTF-8 and would inflate the byte count, causing valid titles to be
 	// rejected or invalid ones to pass.
-	if utf8.RuneCountInString(t) < resourceTitleLengthMin || utf8.RuneCountInString(t) > resourceTitleLengthMax {
+	n := utf8.RuneCountInString(t)
+	if n < resourceTitleLengthMin || n > resourceTitleLengthMax {
 		return t, ErrValidationTitleLength
 	}
 
@@ -39,7 +42,9 @@ const (
 	resourceDescriptionLengthMax = 512
 )
 
-func validateDescription(d string) (string, error) {
+// ValidateDescription is exported because the uow service needs to validate
+// resource fields before writing them within a cross-repository transaction.
+func ValidateDescription(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	// Use RuneCountInString instead of len to count human-readable characters,
@@ -58,7 +63,9 @@ func validateDescription(d string) (string, error) {
 	return d, nil
 }
 
-func validateURL(u string) (string, error) {
+// ValidateURL is exported because the uow service needs to validate
+// resource fields before writing them within a cross-repository transaction.
+func ValidateURL(u string) (string, error) {
 	u = strings.TrimSpace(u)
 
 	// 2048 characters is the practical URL length limit enforced by most
@@ -95,6 +102,26 @@ func validateURL(u string) (string, error) {
 	return uParsed.String(), nil
 }
 
+var privateBlocks []*net.IPNet
+
+func init() {
+	for _, cidr := range []string{
+		"127.0.0.0/8",    // loopback
+		"10.0.0.0/8",     // RFC 1918 private
+		"172.16.0.0/12",  // RFC 1918 private
+		"192.168.0.0/16", // RFC 1918 private
+		"169.254.0.0/16", // link-local (AWS/GCP/Azure metadata endpoint)
+		"::1/128",        // IPv6 loopback
+		"fc00::/7",       // IPv6 unique local
+	} {
+		_, block, err := net.ParseCIDR(cidr)
+		if err != nil {
+			panic(err)
+		}
+		privateBlocks = append(privateBlocks, block)
+	}
+}
+
 // isPrivateHost checks whether a host (with optional port) resolves to a
 // loopback, private (RFC 1918), link-local, or IPv6 unique local address.
 // These are blocked to prevent SSRF if the backend ever fetches stored URLs
@@ -115,18 +142,7 @@ func isPrivateHost(host string) bool {
 		return false
 	}
 
-	privateRanges := []string{
-		"127.0.0.0/8",    // loopback
-		"10.0.0.0/8",     // RFC 1918 private
-		"172.16.0.0/12",  // RFC 1918 private
-		"192.168.0.0/16", // RFC 1918 private
-		"169.254.0.0/16", // link-local (AWS/GCP/Azure metadata endpoint)
-		"::1/128",        // IPv6 loopback
-		"fc00::/7",       // IPv6 unique local
-	}
-
-	for _, cidr := range privateRanges {
-		_, block, _ := net.ParseCIDR(cidr)
+	for _, block := range privateBlocks {
 		if block.Contains(ip) {
 			return true
 		}

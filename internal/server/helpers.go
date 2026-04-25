@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/urlspace/api/internal/config"
-	"github.com/urlspace/api/internal/resource"
 	"github.com/urlspace/api/internal/user"
 )
 
@@ -19,19 +18,16 @@ type responseResource struct {
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
 	URL         string    `json:"url"`
+	Tags        []string  `json:"tags"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-func newResponseResource(r resource.Resource) responseResource {
-	return responseResource{
-		ID:          r.ID,
-		Title:       r.Title,
-		Description: r.Description,
-		URL:         r.Url,
-		CreatedAt:   r.CreatedAt,
-		UpdatedAt:   r.UpdatedAt,
-	}
+type responseTag struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 type responseUser struct {
@@ -40,21 +36,21 @@ type responseUser struct {
 	Username    string    `json:"username"`
 	DisplayName string    `json:"displayName"`
 	IsAdmin     bool      `json:"isAdmin"`
-	IsPro     bool      `json:"isPro"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	IsPro       bool      `json:"isPro"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 func newResponseUser(u user.User) responseUser {
 	return responseUser{
-		ID:        u.ID,
+		ID:          u.ID,
 		Email:       u.Email,
 		Username:    u.Username,
 		DisplayName: u.DisplayName,
 		IsAdmin:     u.IsAdmin,
-		IsPro:     u.IsPro,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+		IsPro:       u.IsPro,
+		CreatedAt:   u.CreatedAt,
+		UpdatedAt:   u.UpdatedAt,
 	}
 }
 
@@ -62,7 +58,7 @@ type responseUserAdmin struct {
 	ID                              uuid.UUID     `json:"id"`
 	Email                           string        `json:"email"`
 	EmailVerified                   bool          `json:"emailVerified"`
-	EmailVerificationToken          uuid.NullUUID `json:"emailVerifcationToken"`
+	EmailVerificationToken          uuid.NullUUID `json:"emailVerificationToken"`
 	EmailVerificationTokenExpiresAt *time.Time    `json:"emailVerificationTokenExpiresAt"`
 	PasswordResetToken              uuid.NullUUID `json:"passwordResetToken"`
 	PasswordResetTokenExpiresAt     *time.Time    `json:"passwordResetTokenExpiresAt"`

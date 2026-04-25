@@ -1,11 +1,10 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/urlspace/api/internal/resource"
+	"github.com/urlspace/api/internal/uow"
 )
 
 type resourceDeleteResponse struct {
@@ -13,7 +12,7 @@ type resourceDeleteResponse struct {
 	Data   responseResource `json:"data"`
 }
 
-func handleResourcesDelete(svc *resource.Service) http.HandlerFunc {
+func handleResourcesDelete(uowSvc *uow.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := userIDFromContext(r.Context())
 
@@ -24,20 +23,24 @@ func handleResourcesDelete(svc *resource.Service) http.HandlerFunc {
 			return
 		}
 
-		rr, err := svc.Delete(r.Context(), idUuid, userID)
+		result, err := uowSvc.DeleteResource(r.Context(), idUuid, userID)
 		if err != nil {
-			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
-		res := &resourceDeleteResponse{
+		writeJSONSuccess(w, http.StatusOK, resourceDeleteResponse{
 			Status: "ok",
-			Data:   newResponseResource(rr),
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+			Data: responseResource{
+				ID:          result.ID,
+				Title:       result.Title,
+				Description: result.Description,
+				URL:         result.URL,
+				Tags:        result.Tags,
+				CreatedAt:   result.CreatedAt,
+				UpdatedAt:   result.UpdatedAt,
+			},
+		})
 	}
 }

@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/urlspace/api/internal/resource"
+	"github.com/urlspace/api/internal/tag"
+	"github.com/urlspace/api/internal/uow"
 	"github.com/urlspace/api/internal/user"
 )
 
-func New(port string, userSvc *user.Service, resourceSvc *resource.Service) *http.Server {
+func New(port string, userSvc *user.Service, tagSvc *tag.Service, uowSvc *uow.Service) *http.Server {
 	// routes
 	mux := http.NewServeMux()
 
@@ -36,11 +37,16 @@ func New(port string, userSvc *user.Service, resourceSvc *resource.Service) *htt
 	mux.Handle("GET /me", sessionOrToken(handleMeGet(userSvc)))
 
 	// resources (protected)
-	mux.Handle("GET /resources", sessionOrToken(handleResourcesList(resourceSvc)))
-	mux.Handle("GET /resources/{id}", sessionOrToken(handleResourcesGet(resourceSvc)))
-	mux.Handle("POST /resources", sessionOrToken(handleResourcesCreate(resourceSvc)))
-	mux.Handle("PUT /resources/{id}", sessionOrToken(handleResourcesUpdate(resourceSvc)))
-	mux.Handle("DELETE /resources/{id}", sessionOrToken(handleResourcesDelete(resourceSvc)))
+	mux.Handle("GET /resources", sessionOrToken(handleResourcesList(uowSvc)))
+	mux.Handle("GET /resources/{id}", sessionOrToken(handleResourcesGet(uowSvc)))
+	mux.Handle("POST /resources", sessionOrToken(handleResourcesCreate(uowSvc)))
+	mux.Handle("PUT /resources/{id}", sessionOrToken(handleResourcesUpdate(uowSvc)))
+	mux.Handle("DELETE /resources/{id}", sessionOrToken(handleResourcesDelete(uowSvc)))
+
+	// tags (protected)
+	mux.Handle("GET /tags", sessionOrToken(handleTagsList(tagSvc)))
+	mux.Handle("PUT /tags/{id}", sessionOrToken(handleTagsUpdate(tagSvc)))
+	mux.Handle("DELETE /tags/{id}", sessionOrToken(handleTagsDelete(tagSvc)))
 
 	// tokens (session-only — token management requires an active session)
 	mux.Handle("POST /tokens", sessionOnly(handleTokensCreate(userSvc)))

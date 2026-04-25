@@ -5,13 +5,14 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/urlspace/api/internal/resource"
+	"github.com/urlspace/api/internal/uow"
 )
 
 type resourceUpdateBody struct {
-	Title       string `json:"title"`
-	URL         string `json:"url"`
-	Description string `json:"description"`
+	Title       string   `json:"title"`
+	URL         string   `json:"url"`
+	Description string   `json:"description"`
+	Tags        []string `json:"tags"`
 }
 
 type resourceUpdateResponse struct {
@@ -19,7 +20,7 @@ type resourceUpdateResponse struct {
 	Data   responseResource `json:"data"`
 }
 
-func handleResourcesUpdate(svc *resource.Service) http.HandlerFunc {
+func handleResourcesUpdate(uowSvc *uow.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := userIDFromContext(r.Context())
 
@@ -38,27 +39,31 @@ func handleResourcesUpdate(svc *resource.Service) http.HandlerFunc {
 			return
 		}
 
-		params := resource.UpdateParamsService{
+		result, err := uowSvc.UpdateResource(r.Context(), uow.UpdateResourceParams{
 			ID:          idUuid,
 			UserID:      userID,
 			Title:       body.Title,
 			Url:         body.URL,
 			Description: body.Description,
-		}
-		rr, err := svc.Update(r.Context(), params)
+			Tags:        body.Tags,
+		})
 		if err != nil {
-			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
-		res := &resourceUpdateResponse{
+		writeJSONSuccess(w, http.StatusOK, resourceUpdateResponse{
 			Status: "ok",
-			Data:   newResponseResource(rr),
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+			Data: responseResource{
+				ID:          result.ID,
+				Title:       result.Title,
+				Description: result.Description,
+				URL:         result.URL,
+				Tags:        result.Tags,
+				CreatedAt:   result.CreatedAt,
+				UpdatedAt:   result.UpdatedAt,
+			},
+		})
 	}
 }

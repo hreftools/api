@@ -28,7 +28,7 @@ type CreateResourceParams struct {
 }
 
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
-	row := q.db.QueryRowContext(ctx, createResource,
+	row := q.db.QueryRow(ctx, createResource,
 		arg.UserID,
 		arg.Title,
 		arg.Description,
@@ -59,7 +59,7 @@ type DeleteResourceParams struct {
 }
 
 func (q *Queries) DeleteResource(ctx context.Context, arg DeleteResourceParams) (Resource, error) {
-	row := q.db.QueryRowContext(ctx, deleteResource, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, deleteResource, arg.ID, arg.UserID)
 	var i Resource
 	err := row.Scan(
 		&i.ID,
@@ -86,7 +86,7 @@ type GetResourceParams struct {
 }
 
 func (q *Queries) GetResource(ctx context.Context, arg GetResourceParams) (Resource, error) {
-	row := q.db.QueryRowContext(ctx, getResource, arg.ID, arg.UserID)
+	row := q.db.QueryRow(ctx, getResource, arg.ID, arg.UserID)
 	var i Resource
 	err := row.Scan(
 		&i.ID,
@@ -107,7 +107,7 @@ ORDER BY created_at
 `
 
 func (q *Queries) ListResources(ctx context.Context, userID uuid.UUID) ([]Resource, error) {
-	rows, err := q.db.QueryContext(ctx, listResources, userID)
+	rows, err := q.db.Query(ctx, listResources, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -127,9 +127,6 @@ func (q *Queries) ListResources(ctx context.Context, userID uuid.UUID) ([]Resour
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -156,7 +153,7 @@ type UpdateResourceParams struct {
 }
 
 func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) (Resource, error) {
-	row := q.db.QueryRowContext(ctx, updateResource,
+	row := q.db.QueryRow(ctx, updateResource,
 		arg.ID,
 		arg.UserID,
 		arg.Title,

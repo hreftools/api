@@ -7,9 +7,20 @@ sql:
       go:
         package: "db"
         out: "internal/db"
+        sql_package: "pgx/v5"
         emit_empty_slices: true
         emit_interface: true
         overrides:
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "UUID"
+            nullable: false
+          - db_type: "uuid"
+            go_type:
+              import: "github.com/google/uuid"
+              type: "NullUUID"
+            nullable: true
           - column: "resources.created_at"
             go_type:
               type: "time.Time"
@@ -50,5 +61,11 @@ sql:
             go_type:
               type: "time.Time"
           - column: "tokens.updated_at"
+            go_type:
+              type: "time.Time"
+          - column: "tags.created_at"
+            go_type:
+              type: "time.Time"
+          - column: "tags.updated_at"
             go_type:
               type: "time.Time"

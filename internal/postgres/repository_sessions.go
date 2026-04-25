@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/urlspace/api/internal/db"
 	"github.com/urlspace/api/internal/user"
 )
@@ -19,7 +19,7 @@ func NewSessionRepository(queries db.Querier) user.SessionRepository {
 }
 
 func translateSessionError(err error) error {
-	if errors.Is(err, sql.ErrNoRows) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return user.ErrNotFound
 	}
 	return err

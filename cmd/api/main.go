@@ -11,14 +11,14 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/resend/resend-go/v3"
 	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/db"
 	"github.com/urlspace/api/internal/emails"
 	"github.com/urlspace/api/internal/postgres"
-	"github.com/urlspace/api/internal/resource"
 	"github.com/urlspace/api/internal/server"
+	"github.com/urlspace/api/internal/tag"
+	"github.com/urlspace/api/internal/uow"
 	"github.com/urlspace/api/internal/user"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -57,23 +57,26 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer func() {
-		if err := pool.Close(); err != nil {
-			log.Printf("Failed to close database connection: %v", err)
-		}
-	}()
+	defer pool.Close()
 
 	queries := db.New(pool)
 	userRepo := postgres.NewUserRepository(queries)
 	sessionRepo := postgres.NewSessionRepository(queries)
 	tokenRepo := postgres.NewTokenRepository(queries)
 	resourceRepo := postgres.NewResourceRepository(queries)
+	tagRepo := postgres.NewTagRepository(queries)
+
+	unitOfWork := postgres.NewUnitOfWork(pool)
 
 	resendClient := resend.NewClient(cfg.ResendAPIKey)
 	emailSender := emails.NewResendEmailSender(resendClient)
 
 	userSvc := user.NewService(userRepo, sessionRepo, tokenRepo, emailSender, cfg.AppURL)
-	resourceSvc := resource.NewService(resourceRepo)
+	tagSvc := tag.NewService(tagRepo)
+	uowSvc := uow.NewService(uow.Repositories{
+		Resources: resourceRepo,
+		Tags:      tagRepo,
+	}, unitOfWork)
 
 	tp, err := initTracer(ctx)
 	if err != nil {
@@ -81,7 +84,7 @@ func run(ctx context.Context) error {
 	}
 	defer tp.Shutdown(context.Background())
 
-	srv := server.New(cfg.Port, userSvc, resourceSvc)
+	srv := server.New(cfg.Port, userSvc, tagSvc, uowSvc)
 	srv.Handler = otelhttp.NewHandler(srv.Handler, "api")
 
 	chServer := make(chan error, 1)

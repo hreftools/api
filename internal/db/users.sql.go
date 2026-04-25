@@ -42,7 +42,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser,
+	row := q.db.QueryRow(ctx, createUser,
 		arg.Email,
 		arg.EmailVerified,
 		arg.EmailVerificationToken,
@@ -80,7 +80,7 @@ RETURNING id, email, email_verified, email_verification_token, email_verificatio
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, deleteUser, id)
+	row := q.db.QueryRow(ctx, deleteUser, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -111,7 +111,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	row := q.db.QueryRow(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -142,7 +142,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByEmailVerificationToken(ctx context.Context, emailVerificationToken uuid.NullUUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByEmailVerificationToken, emailVerificationToken)
+	row := q.db.QueryRow(ctx, getUserByEmailVerificationToken, emailVerificationToken)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -173,7 +173,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserById, id)
+	row := q.db.QueryRow(ctx, getUserById, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -201,7 +201,7 @@ LIMIT 1
 `
 
 func (q *Queries) GetUserByPasswordResetToken(ctx context.Context, passwordResetToken uuid.NullUUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByPasswordResetToken, passwordResetToken)
+	row := q.db.QueryRow(ctx, getUserByPasswordResetToken, passwordResetToken)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -228,7 +228,7 @@ ORDER BY created_at
 `
 
 func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, listUsers)
+	rows, err := q.db.Query(ctx, listUsers)
 	if err != nil {
 		return nil, err
 	}
@@ -256,9 +256,6 @@ func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
 		}
 		items = append(items, i)
 	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -281,7 +278,7 @@ type ResetUserPasswordParams struct {
 }
 
 func (q *Queries) ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, resetUserPassword, arg.ID, arg.Password)
+	row := q.db.QueryRow(ctx, resetUserPassword, arg.ID, arg.Password)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -318,7 +315,7 @@ type UpdatePasswordResetTokenParams struct {
 }
 
 func (q *Queries) UpdatePasswordResetToken(ctx context.Context, arg UpdatePasswordResetTokenParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updatePasswordResetToken, arg.ID, arg.PasswordResetToken, arg.PasswordResetTokenExpiresAt)
+	row := q.db.QueryRow(ctx, updatePasswordResetToken, arg.ID, arg.PasswordResetToken, arg.PasswordResetTokenExpiresAt)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -355,7 +352,7 @@ type UpdateVerificationTokenParams struct {
 }
 
 func (q *Queries) UpdateVerificationToken(ctx context.Context, arg UpdateVerificationTokenParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateVerificationToken, arg.ID, arg.EmailVerificationToken, arg.EmailVerificationTokenExpiresAt)
+	row := q.db.QueryRow(ctx, updateVerificationToken, arg.ID, arg.EmailVerificationToken, arg.EmailVerificationTokenExpiresAt)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -387,7 +384,7 @@ RETURNING id, email, email_verified, email_verification_token, email_verificatio
 `
 
 func (q *Queries) VerifyUser(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRowContext(ctx, verifyUser, id)
+	row := q.db.QueryRow(ctx, verifyUser, id)
 	var i User
 	err := row.Scan(
 		&i.ID,

@@ -84,3 +84,29 @@ CREATE TRIGGER update_tokens_updated_at
 BEFORE UPDATE ON tokens
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
+
+-- tags
+CREATE TABLE tags (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, name)
+);
+
+CREATE INDEX ON tags (user_id);
+
+CREATE TRIGGER update_tags_updated_at
+BEFORE UPDATE ON tags
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- resource_tags (join table)
+CREATE TABLE resource_tags (
+    resource_id UUID NOT NULL REFERENCES resources (id) ON DELETE CASCADE,
+    tag_id UUID NOT NULL REFERENCES tags (id) ON DELETE CASCADE,
+    PRIMARY KEY (resource_id, tag_id)
+);
+
+CREATE INDEX ON resource_tags (tag_id);

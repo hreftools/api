@@ -1,10 +1,9 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
-	"github.com/urlspace/api/internal/resource"
+	"github.com/urlspace/api/internal/uow"
 )
 
 type resourcesListResponse struct {
@@ -12,29 +11,33 @@ type resourcesListResponse struct {
 	Data   []responseResource `json:"data"`
 }
 
-func handleResourcesList(svc *resource.Service) http.HandlerFunc {
+func handleResourcesList(uowSvc *uow.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, _ := userIDFromContext(r.Context())
 
-		list, err := svc.List(r.Context(), userID)
+		list, err := uowSvc.ListResources(r.Context(), userID)
 		if err != nil {
-			statusCode, errorMessage := resource.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
 
 		items := make([]responseResource, len(list))
 		for i, item := range list {
-			items[i] = newResponseResource(item)
+			items[i] = responseResource{
+				ID:          item.ID,
+				Title:       item.Title,
+				Description: item.Description,
+				URL:         item.URL,
+				Tags:        item.Tags,
+				CreatedAt:   item.CreatedAt,
+				UpdatedAt:   item.UpdatedAt,
+			}
 		}
 
-		res := &resourcesListResponse{
+		writeJSONSuccess(w, http.StatusOK, resourcesListResponse{
 			Status: "ok",
 			Data:   items,
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		})
 	}
 }
