@@ -20,15 +20,20 @@ type responseLinkCollection struct {
 	Title string    `json:"title"`
 }
 
+type responseLinkTag struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
 type responseLink struct {
-	ID          uuid.UUID                   `json:"id"`
-	Title       string                      `json:"title"`
-	Description string                      `json:"description"`
-	URL         string                      `json:"url"`
-	Tags        []string                    `json:"tags"`
+	ID          uuid.UUID               `json:"id"`
+	Title       string                  `json:"title"`
+	Description string                  `json:"description"`
+	URL         string                  `json:"url"`
+	Tags        []responseLinkTag       `json:"tags"`
 	Collection  *responseLinkCollection `json:"collection"`
-	CreatedAt   time.Time                   `json:"createdAt"`
-	UpdatedAt   time.Time                   `json:"updatedAt"`
+	CreatedAt   time.Time               `json:"createdAt"`
+	UpdatedAt   time.Time               `json:"updatedAt"`
 }
 
 type responseCollection struct {
@@ -45,12 +50,16 @@ func newResponseLink(r uow.EnrichedLink) responseLink {
 	if r.Collection != nil {
 		col = &responseLinkCollection{ID: r.Collection.ID, Title: r.Collection.Title}
 	}
+	tags := make([]responseLinkTag, len(r.Tags))
+	for i, t := range r.Tags {
+		tags[i] = responseLinkTag{ID: t.ID, Name: t.Name}
+	}
 	return responseLink{
 		ID:          r.ID,
 		Title:       r.Title,
 		Description: r.Description,
 		URL:         r.URL,
-		Tags:        r.Tags,
+		Tags:        tags,
 		Collection:  col,
 		CreatedAt:   r.CreatedAt,
 		UpdatedAt:   r.UpdatedAt,

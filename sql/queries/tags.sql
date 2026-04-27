@@ -34,13 +34,13 @@ WHERE id = $1 AND user_id = $2
 RETURNING *;
 
 -- name: GetTagsForLink :many
-SELECT t.name
+SELECT t.*
 FROM tags t
     JOIN link_tags lt ON t.id = lt.tag_id
 WHERE lt.link_id = $1;
 
 -- name: GetTagsForLinks :many
-SELECT lt.link_id, t.name
+SELECT lt.link_id, t.*
 FROM link_tags lt
     JOIN tags t ON t.id = lt.tag_id
 WHERE lt.link_id = ANY($1::uuid []);

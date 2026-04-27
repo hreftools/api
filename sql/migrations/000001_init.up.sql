@@ -41,7 +41,7 @@ CREATE TABLE collections (
     public BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE(user_id, title)
+    UNIQUE (user_id, title)
 );
 
 CREATE INDEX ON collections (user_id);
@@ -113,7 +113,7 @@ CREATE TABLE tags (
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE(user_id, name)
+    UNIQUE (user_id, name)
 );
 
 CREATE INDEX ON tags (user_id);

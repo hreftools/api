@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -110,25 +111,31 @@ func (q *Queries) GetTagByName(ctx context.Context, arg GetTagByNameParams) (Tag
 }
 
 const getTagsForLink = `-- name: GetTagsForLink :many
-SELECT t.name
+SELECT t.id, t.user_id, t.name, t.created_at, t.updated_at
 FROM tags t
     JOIN link_tags lt ON t.id = lt.tag_id
 WHERE lt.link_id = $1
 `
 
-func (q *Queries) GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]string, error) {
+func (q *Queries) GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]Tag, error) {
 	rows, err := q.db.Query(ctx, getTagsForLink, linkID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []string{}
+	items := []Tag{}
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var i Tag
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
-		items = append(items, name)
+		items = append(items, i)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -137,15 +144,19 @@ func (q *Queries) GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]strin
 }
 
 const getTagsForLinks = `-- name: GetTagsForLinks :many
-SELECT lt.link_id, t.name
+SELECT lt.link_id, t.id, t.user_id, t.name, t.created_at, t.updated_at
 FROM link_tags lt
     JOIN tags t ON t.id = lt.tag_id
 WHERE lt.link_id = ANY($1::uuid [])
 `
 
 type GetTagsForLinksRow struct {
-	LinkID uuid.UUID
-	Name   string
+	LinkID    uuid.UUID
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (q *Queries) GetTagsForLinks(ctx context.Context, dollar_1 []uuid.UUID) ([]GetTagsForLinksRow, error) {
@@ -157,7 +168,14 @@ func (q *Queries) GetTagsForLinks(ctx context.Context, dollar_1 []uuid.UUID) ([]
 	items := []GetTagsForLinksRow{}
 	for rows.Next() {
 		var i GetTagsForLinksRow
-		if err := rows.Scan(&i.LinkID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.LinkID,
+			&i.ID,
+			&i.UserID,
+			&i.Name,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

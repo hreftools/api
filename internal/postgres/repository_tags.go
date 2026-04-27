@@ -99,24 +99,34 @@ func (r *TagRepository) UpsertByName(ctx context.Context, userID uuid.UUID, name
 	return toTag(row), nil
 }
 
-func (r *TagRepository) GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]string, error) {
-	tags, err := r.queries.GetTagsForLink(ctx, linkID)
+func (r *TagRepository) GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]tag.Tag, error) {
+	rows, err := r.queries.GetTagsForLink(ctx, linkID)
 	if err != nil {
 		return nil, translateTagError(err)
 	}
 
+	tags := make([]tag.Tag, len(rows))
+	for i, row := range rows {
+		tags[i] = toTag(row)
+	}
 	return tags, nil
 }
 
-func (r *TagRepository) GetTagsForLinks(ctx context.Context, linkIDs []uuid.UUID) (map[uuid.UUID][]string, error) {
+func (r *TagRepository) GetTagsForLinks(ctx context.Context, linkIDs []uuid.UUID) (map[uuid.UUID][]tag.Tag, error) {
 	rows, err := r.queries.GetTagsForLinks(ctx, linkIDs)
 	if err != nil {
 		return nil, translateTagError(err)
 	}
 
-	result := make(map[uuid.UUID][]string, len(linkIDs))
+	result := make(map[uuid.UUID][]tag.Tag, len(linkIDs))
 	for _, row := range rows {
-		result[row.LinkID] = append(result[row.LinkID], row.Name)
+		result[row.LinkID] = append(result[row.LinkID], tag.Tag{
+			ID:        row.ID,
+			UserID:    row.UserID,
+			Name:      row.Name,
+			CreatedAt: row.CreatedAt,
+			UpdatedAt: row.UpdatedAt,
+		})
 	}
 	return result, nil
 }

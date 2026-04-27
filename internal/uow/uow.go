@@ -44,12 +44,19 @@ type CollectionInfo struct {
 	Title string
 }
 
+// TagInfo is a lightweight summary of a tag, included in enriched link
+// responses. Only ID and Name are needed for display.
+type TagInfo struct {
+	ID   uuid.UUID
+	Name string
+}
+
 // EnrichedLink extends link.Link with tag and collection data.
 // The link package stays independent of tags and collections, so this
 // combined type lives here where all domains are coordinated.
 type EnrichedLink struct {
 	link.Link
-	Tags       []string
+	Tags       []TagInfo
 	Collection *CollectionInfo
 }
 
@@ -60,6 +67,16 @@ func collectionInfoFromLink(l link.Link) *CollectionInfo {
 		return nil
 	}
 	return &CollectionInfo{ID: *l.CollectionID, Title: l.CollectionTitle}
+}
+
+// tagInfosFromTags projects full tag.Tag values to the lightweight TagInfo
+// shape used in enriched link responses.
+func tagInfosFromTags(tags []tag.Tag) []TagInfo {
+	result := make([]TagInfo, len(tags))
+	for i, t := range tags {
+		result[i] = TagInfo{ID: t.ID, Name: t.Name}
+	}
+	return result
 }
 
 type CreateLinkParams struct {
@@ -130,7 +147,7 @@ func (s *Service) CreateLink(ctx context.Context, params CreateLinkParams) (Enri
 		if err != nil {
 			return err
 		}
-		result.Tags = tags
+		result.Tags = tagInfosFromTags(tags)
 
 		return nil
 	})
@@ -208,7 +225,7 @@ func (s *Service) UpdateLink(ctx context.Context, params UpdateLinkParams) (Enri
 		if err != nil {
 			return err
 		}
-		result.Tags = tags
+		result.Tags = tagInfosFromTags(tags)
 
 		return nil
 	})
@@ -238,13 +255,9 @@ func (s *Service) ListLinks(ctx context.Context, userID uuid.UUID) ([]EnrichedLi
 
 	result := make([]EnrichedLink, len(list))
 	for i, item := range list {
-		tags := tagsMap[item.ID]
-		if tags == nil {
-			tags = []string{}
-		}
 		result[i] = EnrichedLink{
 			Link:       item,
-			Tags:       tags,
+			Tags:       tagInfosFromTags(tagsMap[item.ID]),
 			Collection: collectionInfoFromLink(item),
 		}
 	}
@@ -265,7 +278,7 @@ func (s *Service) GetLink(ctx context.Context, id uuid.UUID, userID uuid.UUID) (
 
 	return EnrichedLink{
 		Link:       l,
-		Tags:       tags,
+		Tags:       tagInfosFromTags(tags),
 		Collection: collectionInfoFromLink(l),
 	}, nil
 }
@@ -290,7 +303,7 @@ func (s *Service) DeleteLink(ctx context.Context, id uuid.UUID, userID uuid.UUID
 
 	return EnrichedLink{
 		Link:       deleted,
-		Tags:       tags,
+		Tags:       tagInfosFromTags(tags),
 		Collection: col,
 	}, nil
 }

@@ -23,8 +23,8 @@ type Repository interface {
 	Update(ctx context.Context, params UpdateParams) (Tag, error)
 	Delete(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Tag, error)
 	UpsertByName(ctx context.Context, userID uuid.UUID, name string) (Tag, error)
-	GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]string, error)
-	GetTagsForLinks(ctx context.Context, linkIDs []uuid.UUID) (map[uuid.UUID][]string, error)
+	GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]Tag, error)
+	GetTagsForLinks(ctx context.Context, linkIDs []uuid.UUID) (map[uuid.UUID][]Tag, error)
 	ReplaceLinkTags(ctx context.Context, linkID uuid.UUID, tagIDs []uuid.UUID) error
 }
 
