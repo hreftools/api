@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/resend/resend-go/v3"
+	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/db"
 	"github.com/urlspace/api/internal/emails"
@@ -65,6 +66,7 @@ func run(ctx context.Context) error {
 	tokenRepo := postgres.NewTokenRepository(queries)
 	resourceRepo := postgres.NewResourceRepository(queries)
 	tagRepo := postgres.NewTagRepository(queries)
+	collectionRepo := postgres.NewCollectionRepository(queries)
 
 	unitOfWork := postgres.NewUnitOfWork(pool)
 
@@ -73,9 +75,11 @@ func run(ctx context.Context) error {
 
 	userSvc := user.NewService(userRepo, sessionRepo, tokenRepo, emailSender, cfg.AppURL)
 	tagSvc := tag.NewService(tagRepo)
+	collectionSvc := collection.NewService(collectionRepo)
 	uowSvc := uow.NewService(uow.Repositories{
-		Resources: resourceRepo,
-		Tags:      tagRepo,
+		Resources:   resourceRepo,
+		Tags:        tagRepo,
+		Collections: collectionRepo,
 	}, unitOfWork)
 
 	tp, err := initTracer(ctx)
@@ -84,7 +88,7 @@ func run(ctx context.Context) error {
 	}
 	defer tp.Shutdown(context.Background())
 
-	srv := server.New(cfg.Port, userSvc, tagSvc, uowSvc)
+	srv := server.New(cfg.Port, userSvc, tagSvc, collectionSvc, uowSvc)
 	srv.Handler = otelhttp.NewHandler(srv.Handler, "api")
 
 	chServer := make(chan error, 1)

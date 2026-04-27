@@ -9,18 +9,63 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/config"
+	"github.com/urlspace/api/internal/uow"
 	"github.com/urlspace/api/internal/user"
 )
 
+type responseResourceCollection struct {
+	ID    uuid.UUID `json:"id"`
+	Title string    `json:"title"`
+}
+
 type responseResource struct {
+	ID          uuid.UUID                   `json:"id"`
+	Title       string                      `json:"title"`
+	Description string                      `json:"description"`
+	URL         string                      `json:"url"`
+	Tags        []string                    `json:"tags"`
+	Collection  *responseResourceCollection `json:"collection"`
+	CreatedAt   time.Time                   `json:"createdAt"`
+	UpdatedAt   time.Time                   `json:"updatedAt"`
+}
+
+type responseCollection struct {
 	ID          uuid.UUID `json:"id"`
 	Title       string    `json:"title"`
 	Description string    `json:"description"`
-	URL         string    `json:"url"`
-	Tags        []string  `json:"tags"`
+	Public      bool      `json:"public"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+func newResponseResource(r uow.EnrichedResource) responseResource {
+	var col *responseResourceCollection
+	if r.Collection != nil {
+		col = &responseResourceCollection{ID: r.Collection.ID, Title: r.Collection.Title}
+	}
+	return responseResource{
+		ID:          r.ID,
+		Title:       r.Title,
+		Description: r.Description,
+		URL:         r.URL,
+		Tags:        r.Tags,
+		Collection:  col,
+		CreatedAt:   r.CreatedAt,
+		UpdatedAt:   r.UpdatedAt,
+	}
+}
+
+func newResponseCollection(c collection.Collection) responseCollection {
+	return responseCollection{
+		ID:          c.ID,
+		Title:       c.Title,
+		Description: c.Description,
+		Public:      c.Public,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+	}
 }
 
 type responseTag struct {

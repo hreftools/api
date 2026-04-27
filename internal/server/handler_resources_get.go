@@ -32,15 +32,7 @@ func handleResourcesGet(uowSvc *uow.Service) http.HandlerFunc {
 
 		writeJSONSuccess(w, http.StatusOK, resourcesGetResponse{
 			Status: "ok",
-			Data: responseResource{
-				ID:          result.ID,
-				Title:       result.Title,
-				Description: result.Description,
-				URL:         result.URL,
-				Tags:        result.Tags,
-				CreatedAt:   result.CreatedAt,
-				UpdatedAt:   result.UpdatedAt,
-			},
+			Data:   newResponseResource(result),
 		})
 	}
 }

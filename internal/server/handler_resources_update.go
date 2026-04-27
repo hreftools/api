@@ -9,10 +9,11 @@ import (
 )
 
 type resourceUpdateBody struct {
-	Title       string   `json:"title"`
-	URL         string   `json:"url"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
+	Title        string   `json:"title"`
+	URL          string   `json:"url"`
+	Description  string   `json:"description"`
+	CollectionID *string  `json:"collectionId"`
+	Tags         []string `json:"tags"`
 }
 
 type resourceUpdateResponse struct {
@@ -39,13 +40,24 @@ func handleResourcesUpdate(uowSvc *uow.Service) http.HandlerFunc {
 			return
 		}
 
+		var collectionID *uuid.UUID
+		if body.CollectionID != nil {
+			id, err := uuid.Parse(*body.CollectionID)
+			if err != nil {
+				handleClientError(w, err, "invalid collectionId")
+				return
+			}
+			collectionID = &id
+		}
+
 		result, err := uowSvc.UpdateResource(r.Context(), uow.UpdateResourceParams{
-			ID:          idUuid,
-			UserID:      userID,
-			Title:       body.Title,
-			Url:         body.URL,
-			Description: body.Description,
-			Tags:        body.Tags,
+			ID:           idUuid,
+			UserID:       userID,
+			Title:        body.Title,
+			URL:          body.URL,
+			Description:  body.Description,
+			CollectionID: collectionID,
+			Tags:         body.Tags,
 		})
 		if err != nil {
 			statusCode, errorMessage := uow.MapErrorToHTTP(err)
@@ -55,15 +67,7 @@ func handleResourcesUpdate(uowSvc *uow.Service) http.HandlerFunc {
 
 		writeJSONSuccess(w, http.StatusOK, resourceUpdateResponse{
 			Status: "ok",
-			Data: responseResource{
-				ID:          result.ID,
-				Title:       result.Title,
-				Description: result.Description,
-				URL:         result.URL,
-				Tags:        result.Tags,
-				CreatedAt:   result.CreatedAt,
-				UpdatedAt:   result.UpdatedAt,
-			},
+			Data:   newResponseResource(result),
 		})
 	}
 }

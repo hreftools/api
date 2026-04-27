@@ -9,13 +9,15 @@ import (
 )
 
 type Resource struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	URL         string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	Title           string
+	Description     string
+	URL             string
+	CollectionID    *uuid.UUID
+	CollectionTitle string // populated by Get/List via JOIN, empty on Create/Update/Delete
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 var (
@@ -37,18 +39,20 @@ var (
 )
 
 type CreateParams struct {
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	URL         string
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	URL          string
+	CollectionID *uuid.UUID
 }
 
 type UpdateParams struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	URL         string
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	URL          string
+	CollectionID *uuid.UUID
 }
 
 type Repository interface {

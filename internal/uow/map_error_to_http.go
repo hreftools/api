@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/resource"
 	"github.com/urlspace/api/internal/tag"
 )
@@ -40,10 +41,10 @@ func MapErrorToHTTP(err error) (int, string) {
 		return http.StatusBadRequest, err.Error()
 	}
 
-	if errors.Is(err, resource.ErrNotFound) || errors.Is(err, tag.ErrNotFound) {
+	if errors.Is(err, resource.ErrNotFound) || errors.Is(err, tag.ErrNotFound) || errors.Is(err, collection.ErrNotFound) {
 		return http.StatusNotFound, "not found"
 	}
-	if errors.Is(err, resource.ErrConflict) || errors.Is(err, tag.ErrConflict) {
+	if errors.Is(err, resource.ErrConflict) || errors.Is(err, tag.ErrConflict) || errors.Is(err, collection.ErrConflict) {
 		return http.StatusConflict, "conflict"
 	}
 

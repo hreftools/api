@@ -32,6 +32,25 @@ BEFORE UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+-- collections
+CREATE TABLE collections (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL DEFAULT '',
+    public BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, title)
+);
+
+CREATE INDEX ON collections (user_id);
+
+CREATE TRIGGER update_collections_updated_at
+BEFORE UPDATE ON collections
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 -- resources
 CREATE TABLE resources (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -39,11 +58,13 @@ CREATE TABLE resources (
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     url TEXT NOT NULL,
+    collection_id UUID REFERENCES collections (id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX ON resources (user_id);
+CREATE INDEX ON resources (collection_id);
 
 CREATE TRIGGER update_resources_updated_at
 BEFORE UPDATE ON resources

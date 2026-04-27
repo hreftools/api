@@ -24,15 +24,7 @@ func handleResourcesList(uowSvc *uow.Service) http.HandlerFunc {
 
 		items := make([]responseResource, len(list))
 		for i, item := range list {
-			items[i] = responseResource{
-				ID:          item.ID,
-				Title:       item.Title,
-				Description: item.Description,
-				URL:         item.URL,
-				Tags:        item.Tags,
-				CreatedAt:   item.CreatedAt,
-				UpdatedAt:   item.UpdatedAt,
-			}
+			items[i] = newResponseResource(item)
 		}
 
 		writeJSONSuccess(w, http.StatusOK, resourcesListResponse{

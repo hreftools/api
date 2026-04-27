@@ -69,3 +69,9 @@ sql:
           - column: "tags.updated_at"
             go_type:
               type: "time.Time"
+          - column: "collections.created_at"
+            go_type:
+              type: "time.Time"
+          - column: "collections.updated_at"
+            go_type:
+              type: "time.Time"

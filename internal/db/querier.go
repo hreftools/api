@@ -11,11 +11,13 @@ import (
 )
 
 type Querier interface {
+	CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error)
 	CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error)
 	CreateResourceTag(ctx context.Context, arg CreateResourceTagParams) error
 	CreateSession(ctx context.Context, arg CreateSessionParams) (Session, error)
 	CreateToken(ctx context.Context, arg CreateTokenParams) (Token, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteCollection(ctx context.Context, arg DeleteCollectionParams) (Collection, error)
 	DeleteResource(ctx context.Context, arg DeleteResourceParams) (Resource, error)
 	DeleteResourceTags(ctx context.Context, resourceID uuid.UUID) error
 	DeleteSession(ctx context.Context, id uuid.UUID) error
@@ -24,7 +26,8 @@ type Querier interface {
 	DeleteToken(ctx context.Context, arg DeleteTokenParams) error
 	DeleteTokensByUserID(ctx context.Context, userID uuid.UUID) error
 	DeleteUser(ctx context.Context, id uuid.UUID) (User, error)
-	GetResource(ctx context.Context, arg GetResourceParams) (Resource, error)
+	GetCollection(ctx context.Context, arg GetCollectionParams) (Collection, error)
+	GetResource(ctx context.Context, arg GetResourceParams) (GetResourceRow, error)
 	GetSessionById(ctx context.Context, id uuid.UUID) (Session, error)
 	GetTag(ctx context.Context, arg GetTagParams) (Tag, error)
 	GetTagByName(ctx context.Context, arg GetTagByNameParams) (Tag, error)
@@ -36,11 +39,13 @@ type Querier interface {
 	GetUserByEmailVerificationToken(ctx context.Context, emailVerificationToken uuid.NullUUID) (User, error)
 	GetUserById(ctx context.Context, id uuid.UUID) (User, error)
 	GetUserByPasswordResetToken(ctx context.Context, passwordResetToken uuid.NullUUID) (User, error)
-	ListResources(ctx context.Context, userID uuid.UUID) ([]Resource, error)
+	ListCollections(ctx context.Context, userID uuid.UUID) ([]Collection, error)
+	ListResources(ctx context.Context, userID uuid.UUID) ([]ListResourcesRow, error)
 	ListTags(ctx context.Context, userID uuid.UUID) ([]Tag, error)
 	ListTokensByUserID(ctx context.Context, userID uuid.UUID) ([]Token, error)
 	ListUsers(ctx context.Context) ([]User, error)
 	ResetUserPassword(ctx context.Context, arg ResetUserPasswordParams) (User, error)
+	UpdateCollection(ctx context.Context, arg UpdateCollectionParams) (Collection, error)
 	UpdatePasswordResetToken(ctx context.Context, arg UpdatePasswordResetTokenParams) (User, error)
 	UpdateResource(ctx context.Context, arg UpdateResourceParams) (Resource, error)
 	UpdateSessionExpiresAt(ctx context.Context, arg UpdateSessionExpiresAtParams) (Session, error)

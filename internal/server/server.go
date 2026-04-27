@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/tag"
 	"github.com/urlspace/api/internal/uow"
 	"github.com/urlspace/api/internal/user"
 )
 
-func New(port string, userSvc *user.Service, tagSvc *tag.Service, uowSvc *uow.Service) *http.Server {
+func New(port string, userSvc *user.Service, tagSvc *tag.Service, collectionSvc *collection.Service, uowSvc *uow.Service) *http.Server {
 	// routes
 	mux := http.NewServeMux()
 
@@ -47,6 +48,13 @@ func New(port string, userSvc *user.Service, tagSvc *tag.Service, uowSvc *uow.Se
 	mux.Handle("GET /tags", sessionOrToken(handleTagsList(tagSvc)))
 	mux.Handle("PUT /tags/{id}", sessionOrToken(handleTagsUpdate(tagSvc)))
 	mux.Handle("DELETE /tags/{id}", sessionOrToken(handleTagsDelete(tagSvc)))
+
+	// collections (protected)
+	mux.Handle("GET /collections", sessionOrToken(handleCollectionsList(collectionSvc)))
+	mux.Handle("GET /collections/{id}", sessionOrToken(handleCollectionsGet(collectionSvc)))
+	mux.Handle("POST /collections", sessionOrToken(handleCollectionsCreate(collectionSvc)))
+	mux.Handle("PUT /collections/{id}", sessionOrToken(handleCollectionsUpdate(collectionSvc)))
+	mux.Handle("DELETE /collections/{id}", sessionOrToken(handleCollectionsDelete(collectionSvc)))
 
 	// tokens (session-only — token management requires an active session)
 	mux.Handle("POST /tokens", sessionOnly(handleTokensCreate(userSvc)))

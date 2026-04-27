@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/resource"
 	"github.com/urlspace/api/internal/tag"
 )
@@ -12,8 +13,9 @@ import (
 // because the uow package coordinates across multiple domain repositories.
 // Neither resource nor tag imports this package.
 type Repositories struct {
-	Resources resource.Repository
-	Tags      tag.Repository
+	Resources   resource.Repository
+	Tags        tag.Repository
+	Collections collection.Repository
 }
 
 // UnitOfWork runs fn inside a single database transaction. Every repository in
@@ -35,48 +37,76 @@ func NewService(repos Repositories, uow UnitOfWork) *Service {
 	return &Service{repos: repos, uow: uow}
 }
 
-// ResourceWithTags extends resource.Resource with tag data. The resource
-// package stays independent of tags, so this combined type lives here
-// where both domains are coordinated.
-type ResourceWithTags struct {
+// CollectionInfo is a lightweight summary of a collection, included in
+// enriched resource responses. Only ID and Title are needed for display.
+type CollectionInfo struct {
+	ID    uuid.UUID
+	Title string
+}
+
+// EnrichedResource extends resource.Resource with tag and collection data.
+// The resource package stays independent of tags and collections, so this
+// combined type lives here where all domains are coordinated.
+type EnrichedResource struct {
 	resource.Resource
-	Tags []string
+	Tags       []string
+	Collection *CollectionInfo
+}
+
+// collectionInfoFromResource builds a CollectionInfo from the resource's
+// JOIN-populated fields (used on Get/List paths).
+func collectionInfoFromResource(r resource.Resource) *CollectionInfo {
+	if r.CollectionID == nil {
+		return nil
+	}
+	return &CollectionInfo{ID: *r.CollectionID, Title: r.CollectionTitle}
 }
 
 type CreateResourceParams struct {
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	Url         string
-	Tags        []string
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	URL          string
+	CollectionID *uuid.UUID
+	Tags         []string
 }
 
-func (s *Service) CreateResource(ctx context.Context, params CreateResourceParams) (ResourceWithTags, error) {
+func (s *Service) CreateResource(ctx context.Context, params CreateResourceParams) (EnrichedResource, error) {
 	title, err := resource.ValidateTitle(params.Title)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 	description, err := resource.ValidateDescription(params.Description)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
-	url, err := resource.ValidateURL(params.Url)
+	url, err := resource.ValidateURL(params.URL)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 	tagNames, err := tag.ValidateTagNames(params.Tags)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 
-	var result ResourceWithTags
+	var result EnrichedResource
 
 	err = s.uow.RunInTx(ctx, func(repos Repositories) error {
+		// Validate collection ownership if provided.
+		if params.CollectionID != nil {
+			c, err := repos.Collections.Get(ctx, *params.CollectionID, params.UserID)
+			if err != nil {
+				return err
+			}
+			result.Collection = &CollectionInfo{ID: c.ID, Title: c.Title}
+		}
+
 		r, err := repos.Resources.Create(ctx, resource.CreateParams{
-			UserID:      params.UserID,
-			Title:       title,
-			Description: description,
-			URL:         url,
+			UserID:       params.UserID,
+			Title:        title,
+			Description:  description,
+			URL:          url,
+			CollectionID: params.CollectionID,
 		})
 		if err != nil {
 			return err
@@ -109,41 +139,52 @@ func (s *Service) CreateResource(ctx context.Context, params CreateResourceParam
 }
 
 type UpdateResourceParams struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	Url         string
-	Tags        []string
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	URL          string
+	CollectionID *uuid.UUID
+	Tags         []string
 }
 
-func (s *Service) UpdateResource(ctx context.Context, params UpdateResourceParams) (ResourceWithTags, error) {
+func (s *Service) UpdateResource(ctx context.Context, params UpdateResourceParams) (EnrichedResource, error) {
 	title, err := resource.ValidateTitle(params.Title)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 	description, err := resource.ValidateDescription(params.Description)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
-	url, err := resource.ValidateURL(params.Url)
+	url, err := resource.ValidateURL(params.URL)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 	tagNames, err := tag.ValidateTagNames(params.Tags)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 
-	var result ResourceWithTags
+	var result EnrichedResource
 
 	err = s.uow.RunInTx(ctx, func(repos Repositories) error {
+		// Validate collection ownership if provided.
+		if params.CollectionID != nil {
+			c, err := repos.Collections.Get(ctx, *params.CollectionID, params.UserID)
+			if err != nil {
+				return err
+			}
+			result.Collection = &CollectionInfo{ID: c.ID, Title: c.Title}
+		}
+
 		r, err := repos.Resources.Update(ctx, resource.UpdateParams{
-			ID:          params.ID,
-			UserID:      params.UserID,
-			Title:       title,
-			Description: description,
-			URL:         url,
+			ID:           params.ID,
+			UserID:       params.UserID,
+			Title:        title,
+			Description:  description,
+			URL:          url,
+			CollectionID: params.CollectionID,
 		})
 		if err != nil {
 			return err
@@ -175,14 +216,14 @@ func (s *Service) UpdateResource(ctx context.Context, params UpdateResourceParam
 	return result, err
 }
 
-func (s *Service) ListResources(ctx context.Context, userID uuid.UUID) ([]ResourceWithTags, error) {
+func (s *Service) ListResources(ctx context.Context, userID uuid.UUID) ([]EnrichedResource, error) {
 	list, err := s.repos.Resources.List(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(list) == 0 {
-		return []ResourceWithTags{}, nil
+		return []EnrichedResource{}, nil
 	}
 
 	resourceIDs := make([]uuid.UUID, len(list))
@@ -195,42 +236,61 @@ func (s *Service) ListResources(ctx context.Context, userID uuid.UUID) ([]Resour
 		return nil, err
 	}
 
-	result := make([]ResourceWithTags, len(list))
+	result := make([]EnrichedResource, len(list))
 	for i, item := range list {
 		tags := tagsMap[item.ID]
 		if tags == nil {
 			tags = []string{}
 		}
-		result[i] = ResourceWithTags{Resource: item, Tags: tags}
+		result[i] = EnrichedResource{
+			Resource:   item,
+			Tags:       tags,
+			Collection: collectionInfoFromResource(item),
+		}
 	}
 
 	return result, nil
 }
 
-func (s *Service) GetResource(ctx context.Context, id uuid.UUID, userID uuid.UUID) (ResourceWithTags, error) {
+func (s *Service) GetResource(ctx context.Context, id uuid.UUID, userID uuid.UUID) (EnrichedResource, error) {
 	r, err := s.repos.Resources.Get(ctx, id, userID)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 
 	tags, err := s.repos.Tags.GetTagsForResource(ctx, id)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 
-	return ResourceWithTags{Resource: r, Tags: tags}, nil
+	return EnrichedResource{
+		Resource:   r,
+		Tags:       tags,
+		Collection: collectionInfoFromResource(r),
+	}, nil
 }
 
-func (s *Service) DeleteResource(ctx context.Context, id uuid.UUID, userID uuid.UUID) (ResourceWithTags, error) {
+func (s *Service) DeleteResource(ctx context.Context, id uuid.UUID, userID uuid.UUID) (EnrichedResource, error) {
 	tags, err := s.repos.Tags.GetTagsForResource(ctx, id)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
 	}
 
-	r, err := s.repos.Resources.Delete(ctx, id, userID)
+	// Look up collection info before deleting (DELETE can't JOIN).
+	r, err := s.repos.Resources.Get(ctx, id, userID)
 	if err != nil {
-		return ResourceWithTags{}, err
+		return EnrichedResource{}, err
+	}
+	col := collectionInfoFromResource(r)
+
+	deleted, err := s.repos.Resources.Delete(ctx, id, userID)
+	if err != nil {
+		return EnrichedResource{}, err
 	}
 
-	return ResourceWithTags{Resource: r, Tags: tags}, nil
+	return EnrichedResource{
+		Resource:   deleted,
+		Tags:       tags,
+		Collection: col,
+	}, nil
 }

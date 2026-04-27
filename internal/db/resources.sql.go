@@ -7,24 +7,27 @@ package db
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createResource = `-- name: CreateResource :one
 INSERT INTO resources (
-    user_id, title, description, url
+    user_id, title, description, url, collection_id
 ) VALUES (
-    $1, $2, $3, $4
+    $1, $2, $3, $4, $5
 )
-RETURNING id, user_id, title, description, url, created_at, updated_at
+RETURNING id, user_id, title, description, url, collection_id, created_at, updated_at
 `
 
 type CreateResourceParams struct {
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	Url         string
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	Url          string
+	CollectionID uuid.NullUUID
 }
 
 func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) (Resource, error) {
@@ -33,6 +36,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		arg.Title,
 		arg.Description,
 		arg.Url,
+		arg.CollectionID,
 	)
 	var i Resource
 	err := row.Scan(
@@ -41,6 +45,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
+		&i.CollectionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -50,7 +55,7 @@ func (q *Queries) CreateResource(ctx context.Context, arg CreateResourceParams) 
 const deleteResource = `-- name: DeleteResource :one
 DELETE FROM resources
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, url, created_at, updated_at
+RETURNING id, user_id, title, description, url, collection_id, created_at, updated_at
 `
 
 type DeleteResourceParams struct {
@@ -67,6 +72,7 @@ func (q *Queries) DeleteResource(ctx context.Context, arg DeleteResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
+		&i.CollectionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -74,9 +80,10 @@ func (q *Queries) DeleteResource(ctx context.Context, arg DeleteResourceParams) 
 }
 
 const getResource = `-- name: GetResource :one
-SELECT id, user_id, title, description, url, created_at, updated_at FROM resources
-WHERE
-    id = $1 AND user_id = $2
+SELECT r.id, r.user_id, r.title, r.description, r.url, r.collection_id, r.created_at, r.updated_at, c.title AS collection_title
+FROM resources r
+    LEFT JOIN collections c ON r.collection_id = c.id
+WHERE r.id = $1 AND r.user_id = $2
 LIMIT 1
 `
 
@@ -85,44 +92,74 @@ type GetResourceParams struct {
 	UserID uuid.UUID
 }
 
-func (q *Queries) GetResource(ctx context.Context, arg GetResourceParams) (Resource, error) {
+type GetResourceRow struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	Title           string
+	Description     string
+	Url             string
+	CollectionID    uuid.NullUUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	CollectionTitle pgtype.Text
+}
+
+func (q *Queries) GetResource(ctx context.Context, arg GetResourceParams) (GetResourceRow, error) {
 	row := q.db.QueryRow(ctx, getResource, arg.ID, arg.UserID)
-	var i Resource
+	var i GetResourceRow
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
 		&i.Title,
 		&i.Description,
 		&i.Url,
+		&i.CollectionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.CollectionTitle,
 	)
 	return i, err
 }
 
 const listResources = `-- name: ListResources :many
-SELECT id, user_id, title, description, url, created_at, updated_at FROM resources
-WHERE user_id = $1
-ORDER BY created_at
+SELECT r.id, r.user_id, r.title, r.description, r.url, r.collection_id, r.created_at, r.updated_at, c.title AS collection_title
+FROM resources r
+    LEFT JOIN collections c ON r.collection_id = c.id
+WHERE r.user_id = $1
+ORDER BY r.created_at
 `
 
-func (q *Queries) ListResources(ctx context.Context, userID uuid.UUID) ([]Resource, error) {
+type ListResourcesRow struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	Title           string
+	Description     string
+	Url             string
+	CollectionID    uuid.NullUUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	CollectionTitle pgtype.Text
+}
+
+func (q *Queries) ListResources(ctx context.Context, userID uuid.UUID) ([]ListResourcesRow, error) {
 	rows, err := q.db.Query(ctx, listResources, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Resource{}
+	items := []ListResourcesRow{}
 	for rows.Next() {
-		var i Resource
+		var i ListResourcesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
 			&i.Title,
 			&i.Description,
 			&i.Url,
+			&i.CollectionID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.CollectionTitle,
 		); err != nil {
 			return nil, err
 		}
@@ -139,17 +176,19 @@ UPDATE resources
 SET
     title = $3,
     description = $4,
-    url = $5
+    url = $5,
+    collection_id = $6
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, url, created_at, updated_at
+RETURNING id, user_id, title, description, url, collection_id, created_at, updated_at
 `
 
 type UpdateResourceParams struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Title       string
-	Description string
-	Url         string
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	Url          string
+	CollectionID uuid.NullUUID
 }
 
 func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) (Resource, error) {
@@ -159,6 +198,7 @@ func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) 
 		arg.Title,
 		arg.Description,
 		arg.Url,
+		arg.CollectionID,
 	)
 	var i Resource
 	err := row.Scan(
@@ -167,6 +207,7 @@ func (q *Queries) UpdateResource(ctx context.Context, arg UpdateResourceParams) 
 		&i.Title,
 		&i.Description,
 		&i.Url,
+		&i.CollectionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

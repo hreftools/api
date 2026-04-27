@@ -10,14 +10,25 @@ import (
 	"github.com/google/uuid"
 )
 
-type Resource struct {
+type Collection struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
 	Title       string
 	Description string
-	Url         string
+	Public      bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+}
+
+type Resource struct {
+	ID           uuid.UUID
+	UserID       uuid.UUID
+	Title        string
+	Description  string
+	Url          string
+	CollectionID uuid.NullUUID
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 type ResourceTag struct {
