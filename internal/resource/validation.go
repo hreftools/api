@@ -48,12 +48,15 @@ func ValidateDescription(d string) (string, error) {
 	d = strings.TrimSpace(d)
 
 	// Use RuneCountInString instead of len to count human-readable characters,
-	// not bytes. See validateTitle for details.
+	// not bytes. Non-ASCII characters (e.g. Polish ąęł, CJK) are multi-byte
+	// in UTF-8 and would inflate the byte count, causing valid descriptions to be
+	// rejected or invalid ones to pass.
 	if utf8.RuneCountInString(d) > resourceDescriptionLengthMax {
 		return d, ErrValidationDescriptionLength
 	}
 
-	// Reject control characters. See validateTitle for details.
+	// Reject control characters (null bytes, tabs, newlines, etc.) which can
+	// cause issues in logs, CSV exports, database collation, or rendering.
 	for _, r := range d {
 		if unicode.IsControl(r) {
 			return d, ErrValidationDescriptionInvalidCharacters
