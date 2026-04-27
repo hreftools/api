@@ -21,15 +21,15 @@ type Link struct {
 }
 
 var (
-	// validation title
+	// Title validation errors.
 	ErrValidationTitleLength            = errors.New("title must be between 3 and 255 characters")
 	ErrValidationTitleInvalidCharacters = errors.New("title must not contain control characters")
 
-	// validation description
+	// Description validation errors.
 	ErrValidationDescriptionLength            = errors.New("description must be less than 512 characters")
 	ErrValidationDescriptionInvalidCharacters = errors.New("description must not contain control characters")
 
-	// validation url
+	// URL validation errors.
 	ErrValidationURLFormat  = errors.New("url is invalid")
 	ErrValidationURLTooLong = errors.New("url must be at most 2048 characters")
 	ErrValidationURLPrivate = errors.New("url must not point to a private or local address")

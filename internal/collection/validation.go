@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	collectionTitleLengthMin = 3
+	collectionTitleLengthMin = 2
 	collectionTitleLengthMax = 255
 )
 

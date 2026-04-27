@@ -16,7 +16,7 @@ func MapErrorToHTTP(err error) (int, string) {
 		return 499, "request cancelled"
 	}
 
-	// validation errors
+	// Validation errors.
 	if errors.Is(err, ErrValidationUsernameRequired) ||
 		errors.Is(err, ErrValidationUsernameTooShort) ||
 		errors.Is(err, ErrValidationUsernameTooLong) ||

@@ -227,7 +227,7 @@ func passwordMatchesHash(password, hash string) bool {
 }
 
 var (
-	// validation username
+	// Username validation errors.
 	ErrValidationUsernameRequired   = errors.New("username is required")
 	ErrValidationUsernameTooShort   = errors.New("username must be min 3 characters")
 	ErrValidationUsernameTooLong    = errors.New("username must be max 32 characters")
@@ -236,34 +236,34 @@ var (
 	ErrValidationUsernameSuffix     = errors.New("username cannot end with hyphen or underscore")
 	ErrValidationUsernameReserved   = errors.New("username is reserved")
 
-	// validation email
+	// Email validation errors.
 	ErrValidationEmailRequired = errors.New("email is required")
 	ErrValidationEmailFormat   = errors.New("email format is invalid")
 	ErrValidationEmailTooLong  = errors.New("email must be at most 254 characters")
 
-	// validation password
+	// Password validation errors.
 	ErrValidationPasswordRequired = errors.New("password is required")
 	ErrValidationPasswordTooShort = errors.New("password must be at least 12 characters")
 	ErrValidationPasswordTooLong  = errors.New("password must be at most 128 characters")
 
-	// validation display name
+	// Display name validation errors.
 	ErrValidationDisplayNameRequired          = errors.New("display name is required")
 	ErrValidationDisplayNameTooShort          = errors.New("display name must be min 3 characters")
 	ErrValidationDisplayNameTooLong           = errors.New("display name must be max 32 characters")
 	ErrValidationDisplayNameCharacters        = errors.New("display name can only contain letters, numbers, spaces, hyphens, and underscores")
 	ErrValidationDisplayNameConsecutiveSpaces = errors.New("display name cannot contain consecutive spaces")
 
-	// validation token
+	// Token validation errors.
 	ErrValidationTokenRequired = errors.New("token is required")
 	ErrValidationTokenFormat   = errors.New("token is invalid")
 
-	// validation is admin
+	// Admin flag validation errors.
 	ErrValidationIsAdminRequired = errors.New("isAdmin flag is required")
 
-	// validation is pro
+	// Pro flag validation errors.
 	ErrValidationIsProRequired = errors.New("isPro flag is required")
 
-	// validation api token description
+	// API token description validation errors.
 	ErrValidationTokenDescriptionRequired = errors.New("token description is required")
 	ErrValidationTokenDescriptionTooLong  = errors.New("token description must be at most 255 characters")
 

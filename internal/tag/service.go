@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	// validation errors
+	// Name validation errors.
 	ErrValidationNameLength     = errors.New("tag name must be between 2 and 50 characters")
 	ErrValidationNameCharacters = errors.New("tag name must contain only lowercase letters, digits, and hyphens")
 	ErrValidationNameHyphens    = errors.New("tag name must not start, end with, or contain consecutive hyphens")
