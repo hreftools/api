@@ -37,14 +37,9 @@ func handleUsersCreate(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		res := &usersCreateResponse{
+		writeJSONSuccess(w, http.StatusCreated, usersCreateResponse{
 			Status: "ok",
 			Data:   newResponseUserAdmin(u),
-		}
-
-		w.WriteHeader(http.StatusCreated)
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		})
 	}
 }

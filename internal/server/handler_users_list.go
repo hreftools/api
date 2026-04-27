@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/urlspace/api/internal/user"
@@ -26,13 +25,9 @@ func handleUsersList(svc *user.Service) http.HandlerFunc {
 			items[i] = newResponseUserAdmin(item)
 		}
 
-		res := &usersListResponse{
+		writeJSONSuccess(w, http.StatusOK, usersListResponse{
 			Status: "ok",
 			Data:   items,
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		})
 	}
 }

@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -29,13 +28,9 @@ func handleUsersDelete(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		res := &usersDeleteResponse{
+		writeJSONSuccess(w, http.StatusOK, usersDeleteResponse{
 			Status: "ok",
 			Data:   newResponseUserAdmin(u),
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		})
 	}
 }

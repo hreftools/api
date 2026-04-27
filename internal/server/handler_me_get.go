@@ -1,7 +1,6 @@
 package server
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/urlspace/api/internal/user"
@@ -27,13 +26,9 @@ func handleMeGet(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		res := &meGetResponse{
+		writeJSONSuccess(w, http.StatusOK, meGetResponse{
 			Status: "ok",
 			Data:   newResponseUser(u),
-		}
-
-		if err := json.NewEncoder(w).Encode(res); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		})
 	}
 }
