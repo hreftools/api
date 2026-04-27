@@ -34,7 +34,7 @@ func toCollection(c db.Collection) collection.Collection {
 	return collection.Collection{
 		ID:          c.ID,
 		UserID:      c.UserID,
-		Title:       c.Title,
+		Name:        c.Name,
 		Description: c.Description,
 		Public:      c.Public,
 		CreatedAt:   c.CreatedAt,
@@ -69,7 +69,7 @@ func (r *CollectionRepository) Get(ctx context.Context, id uuid.UUID, userID uui
 func (r *CollectionRepository) Create(ctx context.Context, params collection.CreateParams) (collection.Collection, error) {
 	row, err := r.queries.CreateCollection(ctx, db.CreateCollectionParams{
 		UserID:      params.UserID,
-		Title:       params.Title,
+		Name:        params.Name,
 		Description: params.Description,
 		Public:      params.Public,
 	})
@@ -83,7 +83,7 @@ func (r *CollectionRepository) Update(ctx context.Context, params collection.Upd
 	row, err := r.queries.UpdateCollection(ctx, db.UpdateCollectionParams{
 		ID:          params.ID,
 		UserID:      params.UserID,
-		Title:       params.Title,
+		Name:        params.Name,
 		Description: params.Description,
 		Public:      params.Public,
 	})

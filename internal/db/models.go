@@ -13,7 +13,7 @@ import (
 type Collection struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 	CreatedAt   time.Time

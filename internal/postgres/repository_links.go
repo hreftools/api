@@ -47,7 +47,7 @@ func toNullUUID(id *uuid.UUID) uuid.NullUUID {
 // toLink maps a db.Link to a domain Link. Used by Create, Update,
 // and Delete which return plain table columns via RETURNING *. Get and List
 // use a custom mapping because their LEFT JOIN returns additional columns
-// (CollectionTitle) not present in db.Link.
+// (CollectionName) not present in db.Link.
 func toLink(l db.Link) link.Link {
 	return link.Link{
 		ID:           l.ID,
@@ -70,15 +70,15 @@ func (r *LinkRepository) List(ctx context.Context, userID uuid.UUID) ([]link.Lin
 	links := make([]link.Link, len(rows))
 	for i, row := range rows {
 		links[i] = link.Link{
-			ID:              row.ID,
-			UserID:          row.UserID,
-			Title:           row.Title,
-			Description:     row.Description,
-			URL:             row.Url,
-			CollectionID:    toCollectionID(row.CollectionID),
-			CollectionTitle: row.CollectionTitle.String,
-			CreatedAt:       row.CreatedAt,
-			UpdatedAt:       row.UpdatedAt,
+			ID:             row.ID,
+			UserID:         row.UserID,
+			Title:          row.Title,
+			Description:    row.Description,
+			URL:            row.Url,
+			CollectionID:   toCollectionID(row.CollectionID),
+			CollectionName: row.CollectionName.String,
+			CreatedAt:      row.CreatedAt,
+			UpdatedAt:      row.UpdatedAt,
 		}
 	}
 	return links, nil
@@ -93,15 +93,15 @@ func (r *LinkRepository) Get(ctx context.Context, id uuid.UUID, userID uuid.UUID
 		return link.Link{}, translateLinkError(err)
 	}
 	return link.Link{
-		ID:              row.ID,
-		UserID:          row.UserID,
-		Title:           row.Title,
-		Description:     row.Description,
-		URL:             row.Url,
-		CollectionID:    toCollectionID(row.CollectionID),
-		CollectionTitle: row.CollectionTitle.String,
-		CreatedAt:       row.CreatedAt,
-		UpdatedAt:       row.UpdatedAt,
+		ID:             row.ID,
+		UserID:         row.UserID,
+		Title:          row.Title,
+		Description:    row.Description,
+		URL:            row.Url,
+		CollectionID:   toCollectionID(row.CollectionID),
+		CollectionName: row.CollectionName.String,
+		CreatedAt:      row.CreatedAt,
+		UpdatedAt:      row.UpdatedAt,
 	}, nil
 }
 

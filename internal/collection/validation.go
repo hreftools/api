@@ -7,31 +7,31 @@ import (
 )
 
 const (
-	collectionTitleLengthMin = 2
-	collectionTitleLengthMax = 255
+	collectionNameLengthMin = 2
+	collectionNameLengthMax = 255
 )
 
-func ValidateTitle(t string) (string, error) {
-	t = strings.TrimSpace(t)
+func ValidateName(n string) (string, error) {
+	n = strings.TrimSpace(n)
 
 	// Use RuneCountInString instead of len to count human-readable characters,
 	// not bytes. Non-ASCII characters (e.g. Polish ąęł, CJK) are multi-byte
-	// in UTF-8 and would inflate the byte count, causing valid titles to be
+	// in UTF-8 and would inflate the byte count, causing valid names to be
 	// rejected or invalid ones to pass.
-	n := utf8.RuneCountInString(t)
-	if n < collectionTitleLengthMin || n > collectionTitleLengthMax {
-		return t, ErrValidationTitleLength
+	count := utf8.RuneCountInString(n)
+	if count < collectionNameLengthMin || count > collectionNameLengthMax {
+		return n, ErrValidationNameLength
 	}
 
 	// Reject control characters (null bytes, tabs, newlines, etc.) which can
 	// cause issues in logs, CSV exports, database collation, or rendering.
-	for _, r := range t {
+	for _, r := range n {
 		if unicode.IsControl(r) {
-			return t, ErrValidationTitleInvalidCharacters
+			return n, ErrValidationNameInvalidCharacters
 		}
 	}
 
-	return t, nil
+	return n, nil
 }
 
 const (

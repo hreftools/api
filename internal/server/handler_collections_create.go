@@ -8,7 +8,7 @@ import (
 )
 
 type collectionCreateBody struct {
-	Title       string `json:"title"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 	Public      bool   `json:"public"`
 }
@@ -32,7 +32,7 @@ func handleCollectionsCreate(collectionSvc *collection.Service) http.HandlerFunc
 
 		result, err := collectionSvc.Create(r.Context(), collection.CreateParams{
 			UserID:      userID,
-			Title:       body.Title,
+			Name:        body.Name,
 			Description: body.Description,
 			Public:      body.Public,
 		})

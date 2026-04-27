@@ -17,8 +17,8 @@ func MapErrorToHTTP(err error) (int, string) {
 	}
 
 	// validation errors
-	if errors.Is(err, ErrValidationTitleLength) ||
-		errors.Is(err, ErrValidationTitleInvalidCharacters) ||
+	if errors.Is(err, ErrValidationNameLength) ||
+		errors.Is(err, ErrValidationNameInvalidCharacters) ||
 		errors.Is(err, ErrValidationDescriptionLength) ||
 		errors.Is(err, ErrValidationDescriptionInvalidCharacters) {
 		return http.StatusBadRequest, err.Error()

@@ -9,7 +9,7 @@ import (
 )
 
 type collectionUpdateBody struct {
-	Title       string `json:"title"`
+	Name        string `json:"name"`
 	Description string `json:"description"`
 	Public      bool   `json:"public"`
 }
@@ -41,7 +41,7 @@ func handleCollectionsUpdate(collectionSvc *collection.Service) http.HandlerFunc
 		result, err := collectionSvc.Update(r.Context(), collection.UpdateParams{
 			ID:          idUuid,
 			UserID:      userID,
-			Title:       body.Title,
+			Name:        body.Name,
 			Description: body.Description,
 			Public:      body.Public,
 		})

@@ -12,14 +12,14 @@ import (
 )
 
 const createCollection = `-- name: CreateCollection :one
-INSERT INTO collections (user_id, title, description, public)
+INSERT INTO collections (user_id, name, description, public)
 VALUES ($1, $2, $3, $4)
-RETURNING id, user_id, title, description, public, created_at, updated_at
+RETURNING id, user_id, name, description, public, created_at, updated_at
 `
 
 type CreateCollectionParams struct {
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 }
@@ -27,7 +27,7 @@ type CreateCollectionParams struct {
 func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionParams) (Collection, error) {
 	row := q.db.QueryRow(ctx, createCollection,
 		arg.UserID,
-		arg.Title,
+		arg.Name,
 		arg.Description,
 		arg.Public,
 	)
@@ -35,7 +35,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.Title,
+		&i.Name,
 		&i.Description,
 		&i.Public,
 		&i.CreatedAt,
@@ -47,7 +47,7 @@ func (q *Queries) CreateCollection(ctx context.Context, arg CreateCollectionPara
 const deleteCollection = `-- name: DeleteCollection :one
 DELETE FROM collections
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, public, created_at, updated_at
+RETURNING id, user_id, name, description, public, created_at, updated_at
 `
 
 type DeleteCollectionParams struct {
@@ -61,7 +61,7 @@ func (q *Queries) DeleteCollection(ctx context.Context, arg DeleteCollectionPara
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.Title,
+		&i.Name,
 		&i.Description,
 		&i.Public,
 		&i.CreatedAt,
@@ -71,7 +71,7 @@ func (q *Queries) DeleteCollection(ctx context.Context, arg DeleteCollectionPara
 }
 
 const getCollection = `-- name: GetCollection :one
-SELECT id, user_id, title, description, public, created_at, updated_at FROM collections
+SELECT id, user_id, name, description, public, created_at, updated_at FROM collections
 WHERE id = $1 AND user_id = $2
 LIMIT 1
 `
@@ -87,7 +87,7 @@ func (q *Queries) GetCollection(ctx context.Context, arg GetCollectionParams) (C
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.Title,
+		&i.Name,
 		&i.Description,
 		&i.Public,
 		&i.CreatedAt,
@@ -97,7 +97,7 @@ func (q *Queries) GetCollection(ctx context.Context, arg GetCollectionParams) (C
 }
 
 const listCollections = `-- name: ListCollections :many
-SELECT id, user_id, title, description, public, created_at, updated_at FROM collections
+SELECT id, user_id, name, description, public, created_at, updated_at FROM collections
 WHERE user_id = $1
 ORDER BY created_at
 `
@@ -114,7 +114,7 @@ func (q *Queries) ListCollections(ctx context.Context, userID uuid.UUID) ([]Coll
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
-			&i.Title,
+			&i.Name,
 			&i.Description,
 			&i.Public,
 			&i.CreatedAt,
@@ -132,15 +132,15 @@ func (q *Queries) ListCollections(ctx context.Context, userID uuid.UUID) ([]Coll
 
 const updateCollection = `-- name: UpdateCollection :one
 UPDATE collections
-SET title = $3, description = $4, public = $5
+SET name = $3, description = $4, public = $5
 WHERE id = $1 AND user_id = $2
-RETURNING id, user_id, title, description, public, created_at, updated_at
+RETURNING id, user_id, name, description, public, created_at, updated_at
 `
 
 type UpdateCollectionParams struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 }
@@ -149,7 +149,7 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 	row := q.db.QueryRow(ctx, updateCollection,
 		arg.ID,
 		arg.UserID,
-		arg.Title,
+		arg.Name,
 		arg.Description,
 		arg.Public,
 	)
@@ -157,7 +157,7 @@ func (q *Queries) UpdateCollection(ctx context.Context, arg UpdateCollectionPara
 	err := row.Scan(
 		&i.ID,
 		&i.UserID,
-		&i.Title,
+		&i.Name,
 		&i.Description,
 		&i.Public,
 		&i.CreatedAt,

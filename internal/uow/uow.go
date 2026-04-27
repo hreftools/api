@@ -38,10 +38,10 @@ func NewService(repos Repositories, uow UnitOfWork) *Service {
 }
 
 // CollectionInfo is a lightweight summary of a collection, included in
-// enriched link responses. Only ID and Title are needed for display.
+// enriched link responses. Only ID and Name are needed for display.
 type CollectionInfo struct {
-	ID    uuid.UUID
-	Title string
+	ID   uuid.UUID
+	Name string
 }
 
 // TagInfo is a lightweight summary of a tag, included in enriched link
@@ -66,7 +66,7 @@ func collectionInfoFromLink(l link.Link) *CollectionInfo {
 	if l.CollectionID == nil {
 		return nil
 	}
-	return &CollectionInfo{ID: *l.CollectionID, Title: l.CollectionTitle}
+	return &CollectionInfo{ID: *l.CollectionID, Name: l.CollectionName}
 }
 
 // tagInfosFromTags projects full tag.Tag values to the lightweight TagInfo
@@ -115,7 +115,7 @@ func (s *Service) CreateLink(ctx context.Context, params CreateLinkParams) (Enri
 			if err != nil {
 				return err
 			}
-			result.Collection = &CollectionInfo{ID: c.ID, Title: c.Title}
+			result.Collection = &CollectionInfo{ID: c.ID, Name: c.Name}
 		}
 
 		l, err := repos.Links.Create(ctx, link.CreateParams{
@@ -192,7 +192,7 @@ func (s *Service) UpdateLink(ctx context.Context, params UpdateLinkParams) (Enri
 			if err != nil {
 				return err
 			}
-			result.Collection = &CollectionInfo{ID: c.ID, Title: c.Title}
+			result.Collection = &CollectionInfo{ID: c.ID, Name: c.Name}
 		}
 
 		l, err := repos.Links.Update(ctx, link.UpdateParams{

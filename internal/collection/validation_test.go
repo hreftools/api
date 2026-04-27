@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func Test_ValidateTitle(t *testing.T) {
+func Test_ValidateName(t *testing.T) {
 	tests := []struct {
 		name       string
 		input      string
@@ -14,46 +14,46 @@ func Test_ValidateTitle(t *testing.T) {
 		wantErrMsg string
 	}{
 		{
-			name:       "Valid title",
+			name:       "Valid name",
 			input:      "My Collection",
 			wantResult: "My Collection",
 			wantErr:    false,
 		},
 		{
-			name:       "Two character title is valid",
+			name:       "Two character name is valid",
 			input:      "AI",
 			wantResult: "AI",
 			wantErr:    false,
 		},
 		{
-			name:       "Title is trimmed",
+			name:       "Name is trimmed",
 			input:      "  My Collection  ",
 			wantResult: "My Collection",
 			wantErr:    false,
 		},
 		{
-			name:       "Title is too short",
+			name:       "Name is too short",
 			input:      "a",
 			wantErr:    true,
-			wantErrMsg: "title must be between 2 and 255 characters",
+			wantErrMsg: "name must be between 2 and 255 characters",
 		},
 		{
-			name:       "Title is too long",
+			name:       "Name is too long",
 			input:      strings.Repeat("a", 256),
 			wantErr:    true,
-			wantErrMsg: "title must be between 2 and 255 characters",
+			wantErrMsg: "name must be between 2 and 255 characters",
 		},
 		{
-			name:       "Title with null byte is rejected",
+			name:       "Name with null byte is rejected",
 			input:      "My \x00 Collection",
 			wantErr:    true,
-			wantErrMsg: "title must not contain control characters",
+			wantErrMsg: "name must not contain control characters",
 		},
 		{
-			name:       "Title with tab is rejected",
+			name:       "Name with tab is rejected",
 			input:      "My \t Collection",
 			wantErr:    true,
-			wantErrMsg: "title must not contain control characters",
+			wantErrMsg: "name must not contain control characters",
 		},
 		{
 			name:       "Multi-byte characters are counted as characters not bytes",
@@ -64,21 +64,21 @@ func Test_ValidateTitle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotResult, gotErr := ValidateTitle(tt.input)
+			gotResult, gotErr := ValidateName(tt.input)
 			if gotErr != nil {
 				if !tt.wantErr {
-					t.Errorf("ValidateTitle() failed: %v", gotErr)
+					t.Errorf("ValidateName() failed: %v", gotErr)
 				}
 				if gotErr.Error() != tt.wantErrMsg {
-					t.Errorf("ValidateTitle() error message = %v, want %v", gotErr.Error(), tt.wantErrMsg)
+					t.Errorf("ValidateName() error message = %v, want %v", gotErr.Error(), tt.wantErrMsg)
 				}
 				return
 			}
 			if tt.wantErr {
-				t.Fatal("ValidateTitle() succeeded unexpectedly")
+				t.Fatal("ValidateName() succeeded unexpectedly")
 			}
 			if tt.wantResult != "" && gotResult != tt.wantResult {
-				t.Errorf("ValidateTitle() result = %v, want %v", gotResult, tt.wantResult)
+				t.Errorf("ValidateName() result = %v, want %v", gotResult, tt.wantResult)
 			}
 		})
 	}

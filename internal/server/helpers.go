@@ -16,8 +16,8 @@ import (
 )
 
 type responseLinkCollection struct {
-	ID    uuid.UUID `json:"id"`
-	Title string    `json:"title"`
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
 }
 
 type responseLinkTag struct {
@@ -38,7 +38,7 @@ type responseLink struct {
 
 type responseCollection struct {
 	ID          uuid.UUID `json:"id"`
-	Title       string    `json:"title"`
+	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	Public      bool      `json:"public"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -48,7 +48,7 @@ type responseCollection struct {
 func newResponseLink(r uow.EnrichedLink) responseLink {
 	var col *responseLinkCollection
 	if r.Collection != nil {
-		col = &responseLinkCollection{ID: r.Collection.ID, Title: r.Collection.Title}
+		col = &responseLinkCollection{ID: r.Collection.ID, Name: r.Collection.Name}
 	}
 	tags := make([]responseLinkTag, len(r.Tags))
 	for i, t := range r.Tags {
@@ -69,7 +69,7 @@ func newResponseLink(r uow.EnrichedLink) responseLink {
 func newResponseCollection(c collection.Collection) responseCollection {
 	return responseCollection{
 		ID:          c.ID,
-		Title:       c.Title,
+		Name:        c.Name,
 		Description: c.Description,
 		Public:      c.Public,
 		CreatedAt:   c.CreatedAt,

@@ -1,5 +1,5 @@
 -- name: CreateCollection :one
-INSERT INTO collections (user_id, title, description, public)
+INSERT INTO collections (user_id, name, description, public)
 VALUES ($1, $2, $3, $4)
 RETURNING *;
 
@@ -15,7 +15,7 @@ ORDER BY created_at;
 
 -- name: UpdateCollection :one
 UPDATE collections
-SET title = $3, description = $4, public = $5
+SET name = $3, description = $4, public = $5
 WHERE id = $1 AND user_id = $2
 RETURNING *;
 

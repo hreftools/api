@@ -1,12 +1,12 @@
 -- name: GetLink :one
-SELECT l.*, c.title AS collection_title
+SELECT l.*, c.name AS collection_name
 FROM links l
     LEFT JOIN collections c ON l.collection_id = c.id
 WHERE l.id = $1 AND l.user_id = $2
 LIMIT 1;
 
 -- name: ListLinks :many
-SELECT l.*, c.title AS collection_title
+SELECT l.*, c.name AS collection_name
 FROM links l
     LEFT JOIN collections c ON l.collection_id = c.id
 WHERE l.user_id = $1

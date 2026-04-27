@@ -36,12 +36,12 @@ EXECUTE FUNCTION update_updated_at_column();
 CREATE TABLE collections (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-    title TEXT NOT NULL,
+    name TEXT NOT NULL,
     description TEXT NOT NULL DEFAULT '',
     public BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (user_id, title)
+    UNIQUE (user_id, name)
 );
 
 CREATE INDEX ON collections (user_id);

@@ -11,7 +11,7 @@ import (
 type Collection struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 	CreatedAt   time.Time
@@ -19,9 +19,9 @@ type Collection struct {
 }
 
 var (
-	// Title validation errors.
-	ErrValidationTitleLength            = errors.New("title must be between 2 and 255 characters")
-	ErrValidationTitleInvalidCharacters = errors.New("title must not contain control characters")
+	// Name validation errors.
+	ErrValidationNameLength            = errors.New("name must be between 2 and 255 characters")
+	ErrValidationNameInvalidCharacters = errors.New("name must not contain control characters")
 
 	// Description validation errors.
 	ErrValidationDescriptionLength            = errors.New("description must be less than 512 characters")
@@ -33,7 +33,7 @@ var (
 
 type CreateParams struct {
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 }
@@ -41,7 +41,7 @@ type CreateParams struct {
 type UpdateParams struct {
 	ID          uuid.UUID
 	UserID      uuid.UUID
-	Title       string
+	Name        string
 	Description string
 	Public      bool
 }
@@ -71,7 +71,7 @@ func (s *Service) Get(ctx context.Context, id uuid.UUID, userID uuid.UUID) (Coll
 }
 
 func (s *Service) Create(ctx context.Context, params CreateParams) (Collection, error) {
-	title, err := ValidateTitle(params.Title)
+	name, err := ValidateName(params.Name)
 	if err != nil {
 		return Collection{}, err
 	}
@@ -82,14 +82,14 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (Collection, 
 
 	return s.repo.Create(ctx, CreateParams{
 		UserID:      params.UserID,
-		Title:       title,
+		Name:        name,
 		Description: description,
 		Public:      params.Public,
 	})
 }
 
 func (s *Service) Update(ctx context.Context, params UpdateParams) (Collection, error) {
-	title, err := ValidateTitle(params.Title)
+	name, err := ValidateName(params.Name)
 	if err != nil {
 		return Collection{}, err
 	}
@@ -101,7 +101,7 @@ func (s *Service) Update(ctx context.Context, params UpdateParams) (Collection, 
 	return s.repo.Update(ctx, UpdateParams{
 		ID:          params.ID,
 		UserID:      params.UserID,
-		Title:       title,
+		Name:        name,
 		Description: description,
 		Public:      params.Public,
 	})

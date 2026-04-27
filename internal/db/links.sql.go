@@ -80,7 +80,7 @@ func (q *Queries) DeleteLink(ctx context.Context, arg DeleteLinkParams) (Link, e
 }
 
 const getLink = `-- name: GetLink :one
-SELECT l.id, l.user_id, l.title, l.description, l.url, l.collection_id, l.created_at, l.updated_at, c.title AS collection_title
+SELECT l.id, l.user_id, l.title, l.description, l.url, l.collection_id, l.created_at, l.updated_at, c.name AS collection_name
 FROM links l
     LEFT JOIN collections c ON l.collection_id = c.id
 WHERE l.id = $1 AND l.user_id = $2
@@ -93,15 +93,15 @@ type GetLinkParams struct {
 }
 
 type GetLinkRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	Title           string
-	Description     string
-	Url             string
-	CollectionID    uuid.NullUUID
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	CollectionTitle pgtype.Text
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Title          string
+	Description    string
+	Url            string
+	CollectionID   uuid.NullUUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CollectionName pgtype.Text
 }
 
 func (q *Queries) GetLink(ctx context.Context, arg GetLinkParams) (GetLinkRow, error) {
@@ -116,13 +116,13 @@ func (q *Queries) GetLink(ctx context.Context, arg GetLinkParams) (GetLinkRow, e
 		&i.CollectionID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
-		&i.CollectionTitle,
+		&i.CollectionName,
 	)
 	return i, err
 }
 
 const listLinks = `-- name: ListLinks :many
-SELECT l.id, l.user_id, l.title, l.description, l.url, l.collection_id, l.created_at, l.updated_at, c.title AS collection_title
+SELECT l.id, l.user_id, l.title, l.description, l.url, l.collection_id, l.created_at, l.updated_at, c.name AS collection_name
 FROM links l
     LEFT JOIN collections c ON l.collection_id = c.id
 WHERE l.user_id = $1
@@ -130,15 +130,15 @@ ORDER BY l.created_at
 `
 
 type ListLinksRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	Title           string
-	Description     string
-	Url             string
-	CollectionID    uuid.NullUUID
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	CollectionTitle pgtype.Text
+	ID             uuid.UUID
+	UserID         uuid.UUID
+	Title          string
+	Description    string
+	Url            string
+	CollectionID   uuid.NullUUID
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CollectionName pgtype.Text
 }
 
 func (q *Queries) ListLinks(ctx context.Context, userID uuid.UUID) ([]ListLinksRow, error) {
@@ -159,7 +159,7 @@ func (q *Queries) ListLinks(ctx context.Context, userID uuid.UUID) ([]ListLinksR
 			&i.CollectionID,
 			&i.CreatedAt,
 			&i.UpdatedAt,
-			&i.CollectionTitle,
+			&i.CollectionName,
 		); err != nil {
 			return nil, err
 		}
