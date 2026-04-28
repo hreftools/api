@@ -9,7 +9,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -353,7 +353,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		Subject: "Hello from url.space",
 	})
 	if err != nil {
-		log.Printf("Failed to send email: %v", err)
+		slog.Error("failed to send email", "error", err)
 	}
 
 	return nil
@@ -494,7 +494,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		Subject: "Verification token has been requested",
 	})
 	if err != nil {
-		log.Printf("Failed to send email: %v", err)
+		slog.Error("failed to send email", "error", err)
 	}
 
 	return nil
@@ -553,7 +553,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		Subject: "Password reset has been requested",
 	})
 	if err != nil {
-		log.Printf("Failed to send email: %v", err)
+		slog.Error("failed to send email", "error", err)
 	}
 
 	return nil

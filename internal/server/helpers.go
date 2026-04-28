@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -203,7 +203,7 @@ func writeJSONSuccess(w http.ResponseWriter, statusCode int, res any) {
 	w.WriteHeader(statusCode)
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		log.Printf("Error encoding response: %v", err)
+		slog.Error("failed to encode response", "error", err)
 	}
 }
 
@@ -216,16 +216,16 @@ func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	}
 
 	if err := json.NewEncoder(w).Encode(res); err != nil {
-		log.Printf("Error encoding error response: %v", err)
+		slog.Error("failed to encode error response", "error", err)
 	}
 }
 
 func handleClientError(w http.ResponseWriter, err error, message string) {
-	log.Printf("Client error: %v", err)
+	slog.Warn("client error", "error", err, "message", message)
 	writeJSONError(w, http.StatusBadRequest, message)
 }
 
 func handleServerError(w http.ResponseWriter, err error, message string) {
-	log.Printf("Server error: %v, %v", err, message)
+	slog.Error("server error", "error", err, "message", message)
 	writeJSONError(w, http.StatusInternalServerError, "internal server error")
 }

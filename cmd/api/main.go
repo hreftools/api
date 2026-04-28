@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,34 +19,12 @@ import (
 	"github.com/urlspace/api/internal/postgres"
 	"github.com/urlspace/api/internal/server"
 	"github.com/urlspace/api/internal/tag"
+	"github.com/urlspace/api/internal/telemetry"
 	"github.com/urlspace/api/internal/uow"
 	"github.com/urlspace/api/internal/user"
 
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/propagation"
-
-	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
-
-func initTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
-	exporter, err := otlptrace.New(ctx, otlptracehttp.NewClient())
-	if err != nil {
-		return nil, err
-	}
-
-	tp := sdktrace.NewTracerProvider(
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
-		sdktrace.WithBatcher(exporter),
-	)
-	otel.SetTracerProvider(tp)
-	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
-		propagation.TraceContext{}, propagation.Baggage{}))
-	return tp, nil
-}
 
 func run(ctx context.Context) error {
 	cfg, err := config.LoadConfig()
@@ -82,18 +60,25 @@ func run(ctx context.Context) error {
 		Collections: collectionRepo,
 	}, unitOfWork)
 
-	tp, err := initTracer(ctx)
+	tp, err := telemetry.InitTracer(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to initialize tracer: %w", err)
 	}
 	defer tp.Shutdown(context.Background())
+
+	lp, err := telemetry.InitLoggerProvider(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to initialize logger provider: %w", err)
+	}
+	defer lp.Shutdown(context.Background())
+	telemetry.AttachOtelLogger(lp)
 
 	srv := server.New(cfg.Port, userSvc, tagSvc, collectionSvc, uowSvc)
 	srv.Handler = otelhttp.NewHandler(srv.Handler, "api")
 
 	chServer := make(chan error, 1)
 
-	log.Printf("Starting server on %s", cfg.Port)
+	slog.Info("starting server", "port", cfg.Port)
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			chServer <- err
@@ -106,9 +91,9 @@ func run(ctx context.Context) error {
 
 	select {
 	case <-ctxSignal.Done():
-		log.Printf("Server shutting down due to signal: %v", context.Cause(ctxSignal))
+		slog.Info("shutting down server", "signal", context.Cause(ctxSignal))
 	case err := <-chServer:
-		log.Printf("Server error: %v", err)
+		slog.Error("server error", "error", err)
 		return err
 	}
 
@@ -116,24 +101,27 @@ func run(ctx context.Context) error {
 	defer stop()
 
 	if err := srv.Shutdown(ctxTimeout); err != nil {
-		log.Printf("Server shutdown failed: %v", err)
+		slog.Error("server shutdown failed", "error", err)
 
 		if closeErr := srv.Close(); closeErr != nil {
-			log.Printf("Server close failed: %v", closeErr)
+			slog.Error("server close failed", "error", closeErr)
 			return errors.Join(err, closeErr)
 		}
 
 		return err
 	}
 
-	log.Println("Server exited gracefully")
+	slog.Info("server exited gracefully")
 	return nil
 }
 
 func main() {
+	telemetry.SetupLogger()
+
 	ctx := context.Background()
 
 	if err := run(ctx); err != nil {
-		log.Fatal(err)
+		slog.Error("fatal error", "error", err)
+		os.Exit(1)
 	}
 }

@@ -3,7 +3,7 @@ package collection
 import (
 	"context"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -31,6 +31,6 @@ func MapErrorToHTTP(err error) (int, string) {
 		return http.StatusConflict, "conflict"
 	}
 
-	log.Printf("Service error: %v", err)
+	slog.Error("service error", "error", err)
 	return http.StatusInternalServerError, "internal server error"
 }

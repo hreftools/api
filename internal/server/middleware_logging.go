@@ -1,7 +1,7 @@
 package server
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -25,6 +25,23 @@ func loggingMiddleware(next http.Handler) http.Handler {
 		}
 
 		next.ServeHTTP(wrapped, r)
-		log.Println(wrapped.statusCode, r.Method, r.URL.Path, time.Since(start))
+
+		// Map status code to log level so platforms (Railway, etc.) classify
+		// 5xx as errors and 4xx as warnings instead of bucketing everything
+		// the same.
+		level := slog.LevelInfo
+		switch {
+		case wrapped.statusCode >= 500:
+			level = slog.LevelError
+		case wrapped.statusCode >= 400:
+			level = slog.LevelWarn
+		}
+
+		slog.Log(r.Context(), level, "http request",
+			"status", wrapped.statusCode,
+			"method", r.Method,
+			"path", r.URL.Path,
+			"duration", time.Since(start),
+		)
 	})
 }

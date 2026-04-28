@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -20,6 +20,6 @@ func handleNotFound(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding error response: %v", err)
+		slog.Error("failed to encode error response", "error", err)
 	}
 }
