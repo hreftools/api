@@ -53,7 +53,8 @@ func run(ctx context.Context) error {
 
 	unitOfWork := postgres.NewUnitOfWork(pool)
 
-	resendClient := resend.NewClient(cfg.ResendAPIKey)
+	resendHTTPClient := &http.Client{Transport: otelhttp.NewTransport(http.DefaultTransport)}
+	resendClient := resend.NewCustomClient(resendHTTPClient, cfg.ResendAPIKey)
 	emailSender := emails.NewResendEmailSender(resendClient)
 
 	userSvc := user.NewService(userRepo, sessionRepo, tokenRepo, emailSender, cfg.AppURL)

@@ -346,7 +346,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(emails.EmailSendParams{
+	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
 		To:      []string{email},
 		Text:    bodyText,
 		Html:    bodyHtml,
@@ -487,7 +487,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(emails.EmailSendParams{
+	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
 		To:      []string{email},
 		Text:    bodyText,
 		Html:    bodyHtml,
@@ -546,7 +546,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(emails.EmailSendParams{
+	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
 		To:      []string{email},
 		Text:    bodyText,
 		Html:    bodyHtml,

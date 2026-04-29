@@ -1,5 +1,7 @@
 package emails
 
+import "context"
+
 type EmailSendParams struct {
 	To      []string
 	Html    string
@@ -8,5 +10,5 @@ type EmailSendParams struct {
 }
 
 type EmailSender interface {
-	Send(params EmailSendParams) error
+	Send(ctx context.Context, params EmailSendParams) error
 }

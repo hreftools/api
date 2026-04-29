@@ -1,6 +1,8 @@
 package emails
 
 import (
+	"context"
+
 	"github.com/resend/resend-go/v3"
 )
 
@@ -8,8 +10,8 @@ type ResendEmailSender struct {
 	client *resend.Client
 }
 
-func (s *ResendEmailSender) Send(params EmailSendParams) error {
-	_, err := s.client.Emails.Send(&resend.SendEmailRequest{
+func (s *ResendEmailSender) Send(ctx context.Context, params EmailSendParams) error {
+	_, err := s.client.Emails.SendWithContext(ctx, &resend.SendEmailRequest{
 		From:    "url.space <auth@mail.url.space>",
 		To:      params.To,
 		Html:    params.Html,
