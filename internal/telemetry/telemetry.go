@@ -30,7 +30,14 @@ func Setup(ctx context.Context) (shutdown func(context.Context) error, err error
 
 	attachOtelLogger(lp)
 
+	mp, err := initMeterProvider(ctx)
+	if err != nil {
+		_ = tp.Shutdown(ctx)
+		_ = lp.Shutdown(ctx)
+		return nil, fmt.Errorf("meter provider: %w", err)
+	}
+
 	return func(ctx context.Context) error {
-		return errors.Join(tp.Shutdown(ctx), lp.Shutdown(ctx))
+		return errors.Join(tp.Shutdown(ctx), lp.Shutdown(ctx), mp.Shutdown(ctx))
 	}, nil
 }
