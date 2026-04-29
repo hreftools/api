@@ -37,7 +37,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	pool, err := postgres.Connect(cfg.DatabaseURL)
+	pool, err := postgres.Connect(cfg.DatabaseURL, telemetry.NewPgxTracer())
 	if err != nil {
 		return err
 	}
