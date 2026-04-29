@@ -19,13 +19,13 @@ func handleTokensGet(svc *user.Service) http.HandlerFunc {
 		id := r.PathValue("id")
 		idUuid, err := uuid.Parse(id)
 		if err != nil {
-			handleClientError(w, err, "invalid id parameter")
+			handleClientError(r.Context(), w, err, "invalid id parameter")
 			return
 		}
 
 		t, err := svc.TokenGetByID(r.Context(), idUuid, userID)
 		if err != nil {
-			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			statusCode, errorMessage := user.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

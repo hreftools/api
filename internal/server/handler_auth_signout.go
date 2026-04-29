@@ -17,7 +17,7 @@ func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 		sessionID, _ := resolveSessionID(r)
 
 		if err := svc.Signout(r.Context(), sessionID); err != nil {
-			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			statusCode, errorMessage := user.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

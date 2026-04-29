@@ -26,7 +26,7 @@ func handleCollectionsCreate(collectionSvc *collection.Service) http.HandlerFunc
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&body); err != nil {
-			handleClientError(w, err, "invalid request body")
+			handleClientError(r.Context(), w, err, "invalid request body")
 			return
 		}
 
@@ -37,7 +37,7 @@ func handleCollectionsCreate(collectionSvc *collection.Service) http.HandlerFunc
 			Public:      body.Public,
 		})
 		if err != nil {
-			statusCode, errorMessage := collection.MapErrorToHTTP(err)
+			statusCode, errorMessage := collection.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

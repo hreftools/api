@@ -11,9 +11,9 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-// InitTracer wires up an OTLP/HTTP trace exporter and registers a global
-// tracer provider plus W3C trace-context + baggage propagators.
-func InitTracer(ctx context.Context) (*sdktrace.TracerProvider, error) {
+// initTracerProvider wires up an OTLP/HTTP trace exporter and registers a
+// global tracer provider plus W3C trace-context + baggage propagators.
+func initTracerProvider(ctx context.Context) (*sdktrace.TracerProvider, error) {
 	exporter, err := otlptrace.New(ctx, otlptracehttp.NewClient())
 	if err != nil {
 		return nil, err

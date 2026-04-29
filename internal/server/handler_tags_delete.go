@@ -19,13 +19,13 @@ func handleTagsDelete(svc *tag.Service) http.HandlerFunc {
 		id := r.PathValue("id")
 		tagID, err := uuid.Parse(id)
 		if err != nil {
-			handleClientError(w, err, "invalid id parameter")
+			handleClientError(r.Context(), w, err, "invalid id parameter")
 			return
 		}
 
 		t, err := svc.Delete(r.Context(), tagID, userID)
 		if err != nil {
-			statusCode, errorMessage := tag.MapErrorToHTTP(err)
+			statusCode, errorMessage := tag.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

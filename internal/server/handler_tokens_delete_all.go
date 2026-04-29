@@ -16,7 +16,7 @@ func handleTokensDeleteAll(svc *user.Service) http.HandlerFunc {
 		userID, _ := userIDFromContext(r.Context())
 
 		if err := svc.TokenDeleteAll(r.Context(), userID); err != nil {
-			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			statusCode, errorMessage := user.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

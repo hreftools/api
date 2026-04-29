@@ -24,7 +24,7 @@ func handleTagsUpdate(svc *tag.Service) http.HandlerFunc {
 		id := r.PathValue("id")
 		tagID, err := uuid.Parse(id)
 		if err != nil {
-			handleClientError(w, err, "invalid id parameter")
+			handleClientError(r.Context(), w, err, "invalid id parameter")
 			return
 		}
 
@@ -32,7 +32,7 @@ func handleTagsUpdate(svc *tag.Service) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&body); err != nil {
-			handleClientError(w, err, "invalid request body")
+			handleClientError(r.Context(), w, err, "invalid request body")
 			return
 		}
 
@@ -43,7 +43,7 @@ func handleTagsUpdate(svc *tag.Service) http.HandlerFunc {
 		}
 		t, err := svc.Update(r.Context(), params)
 		if err != nil {
-			statusCode, errorMessage := tag.MapErrorToHTTP(err)
+			statusCode, errorMessage := tag.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

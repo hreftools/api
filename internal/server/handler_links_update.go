@@ -28,7 +28,7 @@ func handleLinksUpdate(uowSvc *uow.Service) http.HandlerFunc {
 		id := r.PathValue("id")
 		idUuid, err := uuid.Parse(id)
 		if err != nil {
-			handleClientError(w, err, "invalid id parameter")
+			handleClientError(r.Context(), w, err, "invalid id parameter")
 			return
 		}
 
@@ -36,7 +36,7 @@ func handleLinksUpdate(uowSvc *uow.Service) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&body); err != nil {
-			handleClientError(w, err, "invalid request body")
+			handleClientError(r.Context(), w, err, "invalid request body")
 			return
 		}
 
@@ -44,7 +44,7 @@ func handleLinksUpdate(uowSvc *uow.Service) http.HandlerFunc {
 		if body.CollectionID != nil {
 			id, err := uuid.Parse(*body.CollectionID)
 			if err != nil {
-				handleClientError(w, err, "invalid collectionId")
+				handleClientError(r.Context(), w, err, "invalid collectionId")
 				return
 			}
 			collectionID = &id
@@ -60,7 +60,7 @@ func handleLinksUpdate(uowSvc *uow.Service) http.HandlerFunc {
 			Tags:         body.Tags,
 		})
 		if err != nil {
-			statusCode, errorMessage := uow.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

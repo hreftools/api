@@ -17,7 +17,7 @@ func handleCollectionsList(collectionSvc *collection.Service) http.HandlerFunc {
 
 		list, err := collectionSvc.List(r.Context(), userID)
 		if err != nil {
-			statusCode, errorMessage := collection.MapErrorToHTTP(err)
+			statusCode, errorMessage := collection.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

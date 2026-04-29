@@ -201,31 +201,23 @@ type errorResponse struct {
 
 func writeJSONSuccess(w http.ResponseWriter, statusCode int, res any) {
 	w.WriteHeader(statusCode)
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		slog.Error("failed to encode response", "error", err)
-	}
+	_ = json.NewEncoder(w).Encode(res)
 }
 
 func writeJSONError(w http.ResponseWriter, statusCode int, message string) {
 	w.WriteHeader(statusCode)
-
-	res := &errorResponse{
+	_ = json.NewEncoder(w).Encode(&errorResponse{
 		Status: "error",
 		Data:   message,
-	}
-
-	if err := json.NewEncoder(w).Encode(res); err != nil {
-		slog.Error("failed to encode error response", "error", err)
-	}
+	})
 }
 
-func handleClientError(w http.ResponseWriter, err error, message string) {
-	slog.Warn("client error", "error", err, "message", message)
+func handleClientError(ctx context.Context, w http.ResponseWriter, err error, message string) {
+	slog.WarnContext(ctx, "client error", "error", err, "message", message)
 	writeJSONError(w, http.StatusBadRequest, message)
 }
 
-func handleServerError(w http.ResponseWriter, err error, message string) {
-	slog.Error("server error", "error", err, "message", message)
+func handleServerError(ctx context.Context, w http.ResponseWriter, err error, message string) {
+	slog.ErrorContext(ctx, "server error", "error", err, "message", message)
 	writeJSONError(w, http.StatusInternalServerError, "internal server error")
 }

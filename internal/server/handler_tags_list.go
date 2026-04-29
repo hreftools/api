@@ -17,7 +17,7 @@ func handleTagsList(svc *tag.Service) http.HandlerFunc {
 
 		list, err := svc.List(r.Context(), userID)
 		if err != nil {
-			statusCode, errorMessage := tag.MapErrorToHTTP(err)
+			statusCode, errorMessage := tag.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

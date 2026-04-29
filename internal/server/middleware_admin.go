@@ -22,7 +22,7 @@ func adminMiddleware(svc *user.Service) middleware {
 					writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 					return
 				}
-				handleServerError(w, err, "failed to look up user")
+				handleServerError(r.Context(), w, err, "failed to look up user")
 				return
 			}
 

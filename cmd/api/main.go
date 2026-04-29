@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -27,6 +26,12 @@ import (
 )
 
 func run(ctx context.Context) error {
+	shutdownTelemetry, err := telemetry.Setup(ctx)
+	if err != nil {
+		return err
+	}
+	defer shutdownTelemetry(context.Background())
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
@@ -59,19 +64,6 @@ func run(ctx context.Context) error {
 		Tags:        tagRepo,
 		Collections: collectionRepo,
 	}, unitOfWork)
-
-	tp, err := telemetry.InitTracer(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to initialize tracer: %w", err)
-	}
-	defer tp.Shutdown(context.Background())
-
-	lp, err := telemetry.InitLoggerProvider(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to initialize logger provider: %w", err)
-	}
-	defer lp.Shutdown(context.Background())
-	telemetry.AttachOtelLogger(lp)
 
 	srv := server.New(cfg.Port, userSvc, tagSvc, collectionSvc, uowSvc)
 	srv.Handler = otelhttp.NewHandler(srv.Handler, "api")
@@ -116,8 +108,6 @@ func run(ctx context.Context) error {
 }
 
 func main() {
-	telemetry.SetupLogger()
-
 	ctx := context.Background()
 
 	if err := run(ctx); err != nil {

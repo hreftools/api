@@ -353,7 +353,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		Subject: "Hello from url.space",
 	})
 	if err != nil {
-		slog.Error("failed to send email", "error", err)
+		slog.ErrorContext(ctx, "failed to send email", "error", err)
 	}
 
 	return nil
@@ -494,7 +494,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		Subject: "Verification token has been requested",
 	})
 	if err != nil {
-		slog.Error("failed to send email", "error", err)
+		slog.ErrorContext(ctx, "failed to send email", "error", err)
 	}
 
 	return nil
@@ -553,7 +553,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		Subject: "Password reset has been requested",
 	})
 	if err != nil {
-		slog.Error("failed to send email", "error", err)
+		slog.ErrorContext(ctx, "failed to send email", "error", err)
 	}
 
 	return nil

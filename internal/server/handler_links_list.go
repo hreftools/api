@@ -17,7 +17,7 @@ func handleLinksList(uowSvc *uow.Service) http.HandlerFunc {
 
 		list, err := uowSvc.ListLinks(r.Context(), userID)
 		if err != nil {
-			statusCode, errorMessage := uow.MapErrorToHTTP(err)
+			statusCode, errorMessage := uow.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

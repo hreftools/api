@@ -14,7 +14,7 @@ import (
 // MapErrorToHTTP maps errors from the uow service to HTTP status codes.
 // This covers both link and tag validation errors since the uow service
 // coordinates across both domains.
-func MapErrorToHTTP(err error) (int, string) {
+func MapErrorToHTTP(ctx context.Context, err error) (int, string) {
 	if errors.Is(err, context.DeadlineExceeded) {
 		return http.StatusRequestTimeout, "request timeout"
 	}
@@ -48,6 +48,6 @@ func MapErrorToHTTP(err error) (int, string) {
 		return http.StatusConflict, "conflict"
 	}
 
-	slog.Error("service error", "error", err)
+	slog.ErrorContext(ctx, "service error", "error", err)
 	return http.StatusInternalServerError, "internal server error"
 }

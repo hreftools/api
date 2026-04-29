@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func MapErrorToHTTP(err error) (int, string) {
+func MapErrorToHTTP(ctx context.Context, err error) (int, string) {
 	// context errors
 	if errors.Is(err, context.DeadlineExceeded) {
 		return http.StatusRequestTimeout, "request timeout"
@@ -66,6 +66,6 @@ func MapErrorToHTTP(err error) (int, string) {
 		return http.StatusTooManyRequests, err.Error()
 	}
 
-	slog.Error("service error", "error", err)
+	slog.ErrorContext(ctx, "service error", "error", err)
 	return http.StatusInternalServerError, "internal server error"
 }

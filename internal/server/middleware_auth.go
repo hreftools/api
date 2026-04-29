@@ -45,7 +45,7 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 			writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		handleServerError(w, err, "failed to look up session")
+		handleServerError(r.Context(), w, err, "failed to look up session")
 		return
 	}
 
@@ -88,7 +88,7 @@ func authenticateToken(w http.ResponseWriter, r *http.Request, svc *user.Service
 			writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
-		handleServerError(w, err, "failed to look up token")
+		handleServerError(r.Context(), w, err, "failed to look up token")
 		return
 	}
 

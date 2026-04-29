@@ -19,13 +19,13 @@ func handleCollectionsDelete(collectionSvc *collection.Service) http.HandlerFunc
 		id := r.PathValue("id")
 		idUuid, err := uuid.Parse(id)
 		if err != nil {
-			handleClientError(w, err, "invalid id parameter")
+			handleClientError(r.Context(), w, err, "invalid id parameter")
 			return
 		}
 
 		result, err := collectionSvc.Delete(r.Context(), idUuid, userID)
 		if err != nil {
-			statusCode, errorMessage := collection.MapErrorToHTTP(err)
+			statusCode, errorMessage := collection.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}

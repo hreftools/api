@@ -62,15 +62,9 @@ func newStdoutHandler() slog.Handler {
 	return slog.NewTextHandler(os.Stdout, nil)
 }
 
-// SetupLogger installs a stdout-only slog default for the early-init phase
-// (config load, tracer setup) before the OTel logger provider exists.
-func SetupLogger() {
-	slog.SetDefault(slog.New(newStdoutHandler()))
-}
-
-// InitLoggerProvider builds an OTel logger provider that exports via OTLP/HTTP.
+// initLoggerProvider builds an OTel logger provider that exports via OTLP/HTTP.
 // Endpoint, headers, etc. are picked up from the standard OTEL_* env vars.
-func InitLoggerProvider(ctx context.Context) (*sdklog.LoggerProvider, error) {
+func initLoggerProvider(ctx context.Context) (*sdklog.LoggerProvider, error) {
 	exporter, err := otlploghttp.New(ctx)
 	if err != nil {
 		return nil, err
@@ -81,9 +75,9 @@ func InitLoggerProvider(ctx context.Context) (*sdklog.LoggerProvider, error) {
 	return provider, nil
 }
 
-// AttachOtelLogger upgrades the slog default to fan out to both stdout and the
+// attachOtelLogger upgrades the slog default to fan out to both stdout and the
 // OTel bridge, so logs reach Grafana without losing terminal/Railway output.
-func AttachOtelLogger(provider *sdklog.LoggerProvider) {
+func attachOtelLogger(provider *sdklog.LoggerProvider) {
 	otelHandler := otelslog.NewHandler("github.com/urlspace/api", otelslog.WithLoggerProvider(provider))
 	slog.SetDefault(slog.New(multiHandler{newStdoutHandler(), otelHandler}))
 }

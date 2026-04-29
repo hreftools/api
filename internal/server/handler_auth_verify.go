@@ -22,13 +22,13 @@ func handleAuthVerify(svc *user.Service) http.HandlerFunc {
 		decoder := json.NewDecoder(r.Body)
 		decoder.DisallowUnknownFields()
 		if err := decoder.Decode(&body); err != nil {
-			handleClientError(w, err, "invalid request body")
+			handleClientError(r.Context(), w, err, "invalid request body")
 			return
 		}
 
 		err := svc.Verify(r.Context(), body.Token)
 		if err != nil {
-			statusCode, errorMessage := user.MapErrorToHTTP(err)
+			statusCode, errorMessage := user.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
 		}
