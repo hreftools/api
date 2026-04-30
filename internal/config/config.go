@@ -31,7 +31,7 @@ func LoadConfig() (*Config, error) {
 		Port:         os.Getenv("PORT"),
 		DatabaseURL:  os.Getenv("DATABASE_URL"),
 		ResendAPIKey: os.Getenv("RESEND_API_KEY"),
-		AppURL:       os.Getenv("APP_URL"),
+		AppURL:       strings.TrimSuffix(os.Getenv("APP_URL"), "/"),
 	}
 
 	var missing []string

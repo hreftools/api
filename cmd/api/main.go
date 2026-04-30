@@ -66,7 +66,7 @@ func run(ctx context.Context) error {
 		Collections: collectionRepo,
 	}, unitOfWork)
 
-	srv := server.New(cfg.Port, userSvc, tagSvc, collectionSvc, uowSvc)
+	srv := server.New(cfg.Port, cfg.AppURL, userSvc, tagSvc, collectionSvc, uowSvc)
 	srv.Handler = otelhttp.NewHandler(srv.Handler, "api")
 
 	chServer := make(chan error, 1)
