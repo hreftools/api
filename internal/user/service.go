@@ -719,6 +719,10 @@ type TokenCreateResult struct {
 // TokenCreate generates a new API token for the user after verifying their
 // password. The raw token is returned once and never stored — only its
 // SHA-256 hash is persisted.
+// Tokens (and sessions) live in the user service because they're auth
+// artifacts of a user identity, not independent domains. TokenCreate
+// requires password verification, which would force a cross-domain
+// import if tokens lived elsewhere.
 func (s *Service) TokenCreate(ctx context.Context, userID uuid.UUID, password, description string) (TokenCreateResult, error) {
 	password, err := validatePassword(password)
 	if err != nil {
