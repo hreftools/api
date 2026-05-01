@@ -14,15 +14,17 @@ func commonHeadersMiddleware(appURL string) middleware {
 			// CORS
 			origin := r.Header.Get("Origin")
 			if origin == appURL {
+				// browser needs these on the preflight and actual response
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Credentials", "true")
-				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-				w.Header().Set("Access-Control-Max-Age", "86400")
 
 				// This is just for browsers, after quick check of allowed methods and headers,
 				// the preflight can be terminated early without hitting the actual handler.
 				if r.Method == http.MethodOptions {
+					// browser needs these only on preflight, otherwise they are ignored, so we can skip them on the actual response
+					w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+					w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+					w.Header().Set("Access-Control-Max-Age", "86400")
 					w.WriteHeader(http.StatusNoContent)
 					return
 				}
