@@ -66,7 +66,13 @@ const (
 	passwordLengthMax = 128
 )
 
-func validatePassword(p string) (string, error) {
+// minContextualLen is the minimum length of a contextual value (username,
+// email local-part, etc.) before it's checked against a candidate password.
+// Shorter values produce too many false positives — e.g. a 3-char username
+// "joe" would reject a strong password that happens to contain "joe".
+const minContextualLen = 4
+
+func validatePassword(p string, contextualValues ...string) (string, error) {
 	if len(p) == 0 {
 		return p, ErrValidationPasswordRequired
 	}
@@ -85,6 +91,23 @@ func validatePassword(p string) (string, error) {
 
 	if utf8.RuneCountInString(p) > passwordLengthMax {
 		return p, ErrValidationPasswordTooLong
+	}
+
+	// Reject passwords that contain a known contextual value (username,
+	// display name, email local-part). Catches the common pattern of users
+	// recycling their identity into their password.
+	if len(contextualValues) == 0 {
+		return p, nil
+	}
+	pLower := strings.ToLower(p)
+	for _, v := range contextualValues {
+		v = strings.ToLower(strings.TrimSpace(v))
+		if utf8.RuneCountInString(v) < minContextualLen {
+			continue
+		}
+		if strings.Contains(pLower, v) {
+			return p, ErrValidationPasswordContainsContext
+		}
 	}
 
 	return p, nil

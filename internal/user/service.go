@@ -242,9 +242,10 @@ var (
 	ErrValidationEmailTooLong  = errors.New("email must be at most 254 characters")
 
 	// Password validation errors.
-	ErrValidationPasswordRequired = errors.New("password is required")
-	ErrValidationPasswordTooShort = errors.New("password must be at least 12 characters")
-	ErrValidationPasswordTooLong  = errors.New("password must be at most 128 characters")
+	ErrValidationPasswordRequired        = errors.New("password is required")
+	ErrValidationPasswordTooShort        = errors.New("password must be at least 12 characters")
+	ErrValidationPasswordTooLong         = errors.New("password must be at most 128 characters")
+	ErrValidationPasswordContainsContext = errors.New("password cannot contain your username, display name, or email")
 
 	// Display name validation errors.
 	ErrValidationDisplayNameRequired          = errors.New("display name is required")
@@ -300,11 +301,12 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	if err != nil {
 		return err
 	}
-	password, err = validatePassword(password)
+	email, err = validateEmail(email)
 	if err != nil {
 		return err
 	}
-	email, err = validateEmail(email)
+	emailLocalPart := strings.SplitN(email, "@", 2)[0]
+	password, err = validatePassword(password, username, emailLocalPart)
 	if err != nil {
 		return err
 	}
@@ -565,10 +567,6 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 	if err != nil {
 		return err
 	}
-	newPassword, err = validatePassword(newPassword)
-	if err != nil {
-		return err
-	}
 	token, _ := uuid.Parse(tokenStr)
 
 	u, err := s.UserRepo.GetByPasswordResetToken(ctx, token)
@@ -578,6 +576,12 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 
 	if u.PasswordResetTokenExpiresAt != nil && u.PasswordResetTokenExpiresAt.Before(time.Now()) {
 		return ErrTokenExpired
+	}
+
+	emailLocalPart := strings.SplitN(u.Email, "@", 2)[0]
+	newPassword, err = validatePassword(newPassword, u.Username, u.DisplayName, emailLocalPart)
+	if err != nil {
+		return err
 	}
 
 	passwordHash, err := passwordHash(newPassword)
@@ -626,11 +630,12 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 	if err != nil {
 		return User{}, err
 	}
-	password, err = validatePassword(password)
+	email, err = validateEmail(email)
 	if err != nil {
 		return User{}, err
 	}
-	email, err = validateEmail(email)
+	emailLocalPart := strings.SplitN(email, "@", 2)[0]
+	password, err = validatePassword(password, username, emailLocalPart)
 	if err != nil {
 		return User{}, err
 	}

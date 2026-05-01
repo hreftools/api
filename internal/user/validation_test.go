@@ -94,10 +94,11 @@ func Test_validateEmail(t *testing.T) {
 
 func Test_validatePassword(t *testing.T) {
 	tests := []struct {
-		name       string
-		input      string
-		wantErr    bool
-		wantErrMsg string
+		name             string
+		input            string
+		contextualValues []string
+		wantErr          bool
+		wantErrMsg       string
 	}{
 		{
 			name:    "Valid password",
@@ -134,10 +135,62 @@ func Test_validatePassword(t *testing.T) {
 			wantErr:    true,
 			wantErrMsg: "password must be at most 128 characters",
 		},
+		{
+			name:             "Password is rejected when it contains the username",
+			input:            "alicepassword123",
+			contextualValues: []string{"alice"},
+			wantErr:          true,
+			wantErrMsg:       "password cannot contain your username, display name, or email",
+		},
+		{
+			name:             "Contextual match is case-insensitive",
+			input:            "AlicePassword123",
+			contextualValues: []string{"alice"},
+			wantErr:          true,
+			wantErrMsg:       "password cannot contain your username, display name, or email",
+		},
+		{
+			name:             "Password is rejected when it contains the email local-part",
+			input:            "myjohnsecret123",
+			contextualValues: []string{"alice", "john"},
+			wantErr:          true,
+			wantErrMsg:       "password cannot contain your username, display name, or email",
+		},
+		{
+			name:             "Contextual values shorter than 4 characters are ignored",
+			input:            "enjoymentpassword",
+			contextualValues: []string{"joe"},
+			wantErr:          false,
+		},
+		{
+			name:             "Contextual length threshold counts runes not bytes",
+			input:            "Léopassword123",
+			contextualValues: []string{"Léo"},
+			wantErr:          false,
+		},
+		{
+			name:             "Contextual value is trimmed before matching",
+			input:            "alicepassword123",
+			contextualValues: []string{"  alice  "},
+			wantErr:          true,
+			wantErrMsg:       "password cannot contain your username, display name, or email",
+		},
+		{
+			name:             "Empty and whitespace-only contextual values are ignored",
+			input:            "supersecretpassword123",
+			contextualValues: []string{"", "   "},
+			wantErr:          false,
+		},
+		{
+			name:             "Password without any contextual match is accepted",
+			input:            "supersecretpassword123",
+			contextualValues: []string{"alice", "bob"},
+			wantErr:          false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, gotErr := validatePassword(tt.input)
+			_, gotErr := validatePassword(tt.input, tt.contextualValues...)
 			if gotErr != nil {
 				if !tt.wantErr {
 					t.Errorf("Password() failed: %v", gotErr)
