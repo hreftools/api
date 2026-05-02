@@ -51,20 +51,16 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 
 	// Clear the cookie on the client to prevent repeated lookups of the same expired session on subsequent requests.
 	if time.Now().After(session.ExpiresAt) {
-		http.SetCookie(w, &http.Cookie{
-			Name:     config.SessionCookieName,
-			MaxAge:   -1,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+		clearSessionCookie(w)
 		writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	// Sliding expiry: renew sessions that are approaching expiry.
+	// Sliding expiry: refresh both the cookie and the DB row when the session
+	// is approaching expiry, so an actively-used session never dies.
 	if time.Until(session.ExpiresAt) < config.SessionRenewalThreshold {
+		newExpiresAt := time.Now().Add(config.SessionExpiryDuration)
+		setSessionCookie(w, session.ID.String(), newExpiresAt)
 		go func() {
 			// Fire-and-forget renewal. Errors are intentionally swallowed:
 			// a failed renewal is non-fatal — the session remains valid for
@@ -72,7 +68,7 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 			// be retried on the next request.
 			_, _ = svc.UpdateSessionExpiresAt(context.Background(), user.SessionUpdateExpiresAtParams{
 				ID:        session.ID,
-				ExpiresAt: time.Now().Add(config.SessionExpiryDuration),
+				ExpiresAt: newExpiresAt,
 			})
 		}()
 	}

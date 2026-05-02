@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 
-	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/user"
 )
 
@@ -22,14 +21,7 @@ func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		http.SetCookie(w, &http.Cookie{
-			Name:     config.SessionCookieName,
-			MaxAge:   -1,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+		clearSessionCookie(w)
 
 		writeJSONSuccess(w, http.StatusOK, authSignoutResponse{
 			Status: "ok",

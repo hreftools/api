@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/user"
 )
 
@@ -45,15 +44,7 @@ func handleAuthSignin(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		http.SetCookie(w, &http.Cookie{
-			Name:     config.SessionCookieName,
-			Value:    result.Session.ID.String(),
-			Expires:  result.Session.ExpiresAt,
-			Path:     "/",
-			HttpOnly: true,
-			Secure:   true,
-			SameSite: http.SameSiteLaxMode,
-		})
+		setSessionCookie(w, result.Session.ID.String(), result.Session.ExpiresAt)
 
 		writeJSONSuccess(w, http.StatusOK, authSigninResponse{
 			Status: "ok",

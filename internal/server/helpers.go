@@ -192,6 +192,33 @@ func userIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	return id, ok
 }
 
+func setSessionCookie(w http.ResponseWriter, value string, expires time.Time) {
+	if expires.IsZero() {
+		slog.Error("setSessionCookie called with zero expires time, cookie not set")
+		return
+	}
+	http.SetCookie(w, &http.Cookie{
+		Name:     config.SessionCookieName,
+		Value:    value,
+		Expires:  expires,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
+func clearSessionCookie(w http.ResponseWriter) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     config.SessionCookieName,
+		MaxAge:   -1,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	})
+}
+
 // JSON response helpers
 
 type errorResponse struct {
