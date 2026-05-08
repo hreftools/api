@@ -77,7 +77,10 @@ UPDATE users
 SET
     password = $2,
     password_reset_token = NULL,
-    password_reset_token_expires_at = NULL
+    password_reset_token_expires_at = NULL,
+    email_verified = TRUE,
+    email_verification_token = NULL,
+    email_verification_token_expires_at = NULL
 WHERE id = $1
 RETURNING *;
 

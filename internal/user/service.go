@@ -337,7 +337,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	emailVerifyData := emails.AuthSignupParams{
 		Username: username,
 		Email:    email,
-		Url:      s.AppURL + "/auth/verify?token=" + token.UUID.String(),
+		Url:      s.AppURL + "/auth/signup/" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthSignupTemplateHtml, emailVerifyData)
 	if err != nil {
@@ -478,7 +478,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 	}
 
 	templateParams := emails.AuthResendVerificationParams{
-		Url: s.AppURL + "/auth/verify?token=" + token.UUID.String(),
+		Url: s.AppURL + "/auth/signup/" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResendVerificationTemplateHtml, templateParams)
 	if err != nil {
@@ -537,7 +537,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	}
 
 	templateParams := emails.AuthResetPasswordRequestParams{
-		Url: s.AppURL + "/auth/reset-password?token=" + token.UUID.String(),
+		Url: s.AppURL + "/auth/reset-password/" + token.UUID.String(),
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResetPasswordRequestTemplateHtml, templateParams)
 	if err != nil {
@@ -589,6 +589,11 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
+	// ResetPassword also marks the user as verified and clears any pending
+	// verification token. Completing a password reset proves the user controls
+	// the inbox — the same guarantee email verification provides — so we treat
+	// it as an implicit verification. This avoids a dead-end where an unverified
+	// user resets their password but is still blocked at signin.
 	_, err = s.UserRepo.ResetPassword(ctx, u.ID, passwordHash)
 	if err != nil {
 		return err
