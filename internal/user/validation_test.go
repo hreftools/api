@@ -52,6 +52,18 @@ func Test_validateEmail(t *testing.T) {
 			wantErrMsg: "email format is invalid",
 		},
 		{
+			name:       "Email without TLD is rejected",
+			input:      "user@localhost",
+			wantErr:    true,
+			wantErrMsg: "email format is invalid",
+		},
+		{
+			name:       "Email with trailing dot in domain is rejected",
+			input:      "user@example.",
+			wantErr:    true,
+			wantErrMsg: "email format is invalid",
+		},
+		{
 			name:       "Email local part exceeding 64 characters is rejected",
 			input:      strings.Repeat("a", 65) + "@example.com",
 			wantErr:    true,

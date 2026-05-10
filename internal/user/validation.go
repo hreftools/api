@@ -33,10 +33,22 @@ func validateEmail(e string) (string, error) {
 		return e, ErrValidationEmailFormat
 	}
 
+	parts := strings.SplitN(e, "@", 2)
+
+	// RFC 5322 permits TLD-less domains like "user@mail" or "user@localhost",
+	// but a public SaaS can never deliver a verification email to such an
+	// address, so reject anything without at least one dot in the domain and
+	// a non-empty TLD. The LastIndex check rejects "user@mail" (no dot) and
+	// "user@example." (empty TLD); leading-dot cases like "user@.com" are
+	// already rejected by mail.ParseAddress above (empty domain label).
+	domain := parts[1]
+	if i := strings.LastIndex(domain, "."); i <= 0 || i == len(domain)-1 {
+		return e, ErrValidationEmailFormat
+	}
+
 	// Strip plus-addressing (subaddressing) from the local part to prevent
 	// users from creating multiple accounts with the same mailbox.
 	// e.g. "user+tag@gmail.com" becomes "user@gmail.com".
-	parts := strings.SplitN(e, "@", 2)
 	local := strings.SplitN(parts[0], "+", 2)
 	e = local[0] + "@" + parts[1]
 
