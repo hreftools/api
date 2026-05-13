@@ -17,7 +17,12 @@ type contextKey string
 
 const UserIDContextKey contextKey = "userID"
 
-const SessionCookieName = "session_id"
+// SessionCookieName uses the __Host- prefix to instruct the browser to enforce
+// three rules on the cookie at set-time: Secure must be true, Path must be "/",
+// and Domain must be absent (host-only). Any future change that weakens one of
+// these will cause the browser to silently refuse the cookie — a loud failure
+// in dev that prevents the misconfiguration from reaching production.
+const SessionCookieName = "__Host-session_id"
 
 type Config struct {
 	Port         string

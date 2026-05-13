@@ -29,6 +29,7 @@ func toSession(s db.Session) user.Session {
 	return user.Session{
 		ID:          s.ID,
 		UserID:      s.UserID,
+		Hash:        s.Hash,
 		Description: s.Description,
 		ExpiresAt:   s.ExpiresAt,
 		CreatedAt:   s.CreatedAt,
@@ -39,6 +40,7 @@ func toSession(s db.Session) user.Session {
 func (r *SessionRepository) Create(ctx context.Context, params user.SessionCreateParams) (user.Session, error) {
 	args := db.CreateSessionParams{
 		UserID:      params.UserID,
+		Hash:        params.Hash,
 		Description: params.Description,
 		ExpiresAt:   params.ExpiresAt,
 	}
@@ -49,8 +51,8 @@ func (r *SessionRepository) Create(ctx context.Context, params user.SessionCreat
 	return toSession(row), nil
 }
 
-func (r *SessionRepository) GetByID(ctx context.Context, id uuid.UUID) (user.Session, error) {
-	row, err := r.queries.GetSessionById(ctx, id)
+func (r *SessionRepository) GetByHash(ctx context.Context, sessionHash string) (user.Session, error) {
+	row, err := r.queries.GetSessionByHash(ctx, sessionHash)
 	if err != nil {
 		return user.Session{}, translateSessionError(err)
 	}
@@ -69,8 +71,8 @@ func (r *SessionRepository) UpdateExpiresAt(ctx context.Context, params user.Ses
 	return toSession(row), nil
 }
 
-func (r *SessionRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	return r.queries.DeleteSession(ctx, id)
+func (r *SessionRepository) DeleteByHash(ctx context.Context, sessionHash string) error {
+	return r.queries.DeleteSessionByHash(ctx, sessionHash)
 }
 
 func (r *SessionRepository) DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error {

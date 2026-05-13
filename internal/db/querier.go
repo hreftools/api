@@ -20,7 +20,7 @@ type Querier interface {
 	DeleteCollection(ctx context.Context, arg DeleteCollectionParams) (Collection, error)
 	DeleteLink(ctx context.Context, arg DeleteLinkParams) (Link, error)
 	DeleteLinkTags(ctx context.Context, linkID uuid.UUID) error
-	DeleteSession(ctx context.Context, id uuid.UUID) error
+	DeleteSessionByHash(ctx context.Context, hash string) error
 	DeleteSessionsByUserID(ctx context.Context, userID uuid.UUID) error
 	DeleteTag(ctx context.Context, arg DeleteTagParams) (Tag, error)
 	DeleteToken(ctx context.Context, arg DeleteTokenParams) error
@@ -28,7 +28,7 @@ type Querier interface {
 	DeleteUser(ctx context.Context, id uuid.UUID) (User, error)
 	GetCollection(ctx context.Context, arg GetCollectionParams) (Collection, error)
 	GetLink(ctx context.Context, arg GetLinkParams) (GetLinkRow, error)
-	GetSessionById(ctx context.Context, id uuid.UUID) (Session, error)
+	GetSessionByHash(ctx context.Context, hash string) (Session, error)
 	GetTag(ctx context.Context, arg GetTagParams) (Tag, error)
 	GetTagByName(ctx context.Context, arg GetTagByNameParams) (Tag, error)
 	GetTagsForLink(ctx context.Context, linkID uuid.UUID) ([]Tag, error)

@@ -162,13 +162,12 @@ func newResponseToken(t user.Token) responseToken {
 
 // Request helpers
 
-func resolveSessionID(r *http.Request) (uuid.UUID, bool) {
-	if cookie, err := r.Cookie(config.SessionCookieName); err == nil {
-		if id, err := uuid.Parse(cookie.Value); err == nil {
-			return id, true
-		}
+func resolveSession(r *http.Request) (string, bool) {
+	cookie, err := r.Cookie(config.SessionCookieName)
+	if err != nil || cookie.Value == "" {
+		return "", false
 	}
-	return uuid.UUID{}, false
+	return cookie.Value, true
 }
 
 func resolveBearerToken(r *http.Request) (string, bool) {

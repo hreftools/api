@@ -59,6 +59,7 @@ type Repository interface {
 
 type SessionCreateParams struct {
 	UserID      uuid.UUID
+	Hash        string
 	Description *string
 	ExpiresAt   time.Time
 }
@@ -70,9 +71,9 @@ type SessionUpdateExpiresAtParams struct {
 
 type SessionRepository interface {
 	Create(ctx context.Context, params SessionCreateParams) (Session, error)
-	GetByID(ctx context.Context, id uuid.UUID) (Session, error)
+	GetByHash(ctx context.Context, sessionHash string) (Session, error)
 	UpdateExpiresAt(ctx context.Context, params SessionUpdateExpiresAtParams) (Session, error)
-	Delete(ctx context.Context, id uuid.UUID) error
+	DeleteByHash(ctx context.Context, sessionHash string) error
 	DeleteAllByUserID(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -374,7 +375,8 @@ var dummyHash = func() string {
 }()
 
 type SigninResult struct {
-	Session Session
+	Session   string
+	ExpiresAt time.Time
 }
 
 // Signin validates credentials and creates a session.
@@ -405,16 +407,23 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 		return SigninResult{}, ErrInvalidCredentials
 	}
 
-	session, err := s.SessionRepo.Create(ctx, SessionCreateParams{
+	session, err := generateSession()
+	if err != nil {
+		return SigninResult{}, fmt.Errorf("failed to generate session: %w", err)
+	}
+
+	expiresAt := time.Now().Add(config.SessionExpiryDuration)
+	_, err = s.SessionRepo.Create(ctx, SessionCreateParams{
 		UserID:      u.ID,
+		Hash:        hashSession(session),
 		Description: description,
-		ExpiresAt:   time.Now().Add(config.SessionExpiryDuration),
+		ExpiresAt:   expiresAt,
 	})
 	if err != nil {
 		return SigninResult{}, err
 	}
 
-	return SigninResult{Session: session}, nil
+	return SigninResult{Session: session, ExpiresAt: expiresAt}, nil
 }
 
 // Verify validates a verification token and marks the user as verified.
@@ -604,14 +613,17 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPasswor
 	return nil
 }
 
-// Signout deletes a session.
-func (s *Service) Signout(ctx context.Context, sessionID uuid.UUID) error {
-	return s.SessionRepo.Delete(ctx, sessionID)
+// Signout deletes a session identified by the raw cookie value.
+// The cookie value is hashed before deletion; the DB never sees the secret.
+func (s *Service) Signout(ctx context.Context, session string) error {
+	return s.SessionRepo.DeleteByHash(ctx, hashSession(session))
 }
 
-// GetSessionByID retrieves a session by its ID (used by auth middleware).
-func (s *Service) GetSessionByID(ctx context.Context, id uuid.UUID) (Session, error) {
-	return s.SessionRepo.GetByID(ctx, id)
+// GetSession retrieves a session record by the raw cookie value (used by auth
+// middleware). The cookie value is hashed before lookup; the DB never sees the
+// secret, so a read-only DB compromise does not yield usable session tokens.
+func (s *Service) GetSession(ctx context.Context, session string) (Session, error) {
+	return s.SessionRepo.GetByHash(ctx, hashSession(session))
 }
 
 // UpdateSessionExpiresAt updates the expiry of a session (used by auth middleware for sliding expiry).
@@ -693,6 +705,40 @@ func (s *Service) DeleteSelf(ctx context.Context, userID uuid.UUID, password str
 
 	_, err = s.UserRepo.Delete(ctx, userID)
 	return err
+}
+
+// sessionRandomBytes is the number of cryptographically random bytes used to
+// generate a session. 32 bytes = 256 bits of entropy, matching the API token
+// strength and far exceeding the OWASP minimum (64 bits) for session
+// identifiers. Replaces the previous uuidv7-as-session design, which only
+// carried ~74 bits of randomness and was partially predictable (time-ordered).
+const sessionRandomBytes = 32
+
+// generateSession creates a fresh, high-entropy session string suitable for
+// use as a cookie value. Uses base64 URL-safe encoding (no padding) so the
+// result drops cleanly into a Set-Cookie header — no quoting, no reserved
+// characters. Unlike API tokens, sessions have no prefix: they live in the
+// browser's cookie jar, never get pasted into source code, and don't need
+// secret-scanner identification.
+func generateSession() (string, error) {
+	b := make([]byte, sessionRandomBytes)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// hashSession produces a SHA-256 hex digest of a session string — i.e. the
+// sessionHash that gets stored in the database. SHA-256 is appropriate here
+// (unlike passwords) because the input is a 256-bit CSPRNG output that cannot
+// be brute-forced — a fast hash is sufficient. The purpose of hashing is
+// defence in depth: if the database is ever read by an attacker (leaked
+// backup, replica access, SQLi elsewhere), the stored hashes cannot be used
+// as session cookies because the browser sends the raw value and we only ever
+// compare its hash against the stored column.
+func hashSession(session string) string {
+	h := sha256.Sum256([]byte(session))
+	return hex.EncodeToString(h[:])
 }
 
 // tokenPrefix is prepended to every generated API token so that leaked tokens

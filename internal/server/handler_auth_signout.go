@@ -13,9 +13,9 @@ type authSignoutResponse struct {
 
 func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, _ := resolveSessionID(r)
+		session, _ := resolveSession(r)
 
-		if err := svc.Signout(r.Context(), sessionID); err != nil {
+		if err := svc.Signout(r.Context(), session); err != nil {
 			statusCode, errorMessage := user.MapErrorToHTTP(r.Context(), err)
 			writeJSONError(w, statusCode, errorMessage)
 			return
