@@ -108,20 +108,23 @@ func newResponseUser(u user.User) responseUser {
 	}
 }
 
+// responseUserAdmin intentionally omits the email-verification and
+// password-reset token hashes. Even though they're stored as SHA-256 hex
+// rather than usable tokens, the hash is still a secret-shaped piece of state
+// that doesn't need to leave the server — admins can see "user has an active
+// pending reset" via the *ExpiresAt fields below.
 type responseUserAdmin struct {
-	ID                              uuid.UUID     `json:"id"`
-	Email                           string        `json:"email"`
-	EmailVerified                   bool          `json:"emailVerified"`
-	EmailVerificationToken          uuid.NullUUID `json:"emailVerificationToken"`
-	EmailVerificationTokenExpiresAt *time.Time    `json:"emailVerificationTokenExpiresAt"`
-	PasswordResetToken              uuid.NullUUID `json:"passwordResetToken"`
-	PasswordResetTokenExpiresAt     *time.Time    `json:"passwordResetTokenExpiresAt"`
-	Username                        string        `json:"username"`
-	DisplayName                     string        `json:"displayName"`
-	IsAdmin                         bool          `json:"isAdmin"`
-	IsPro                           bool          `json:"isPro"`
-	CreatedAt                       time.Time     `json:"createdAt"`
-	UpdatedAt                       time.Time     `json:"updatedAt"`
+	ID                              uuid.UUID  `json:"id"`
+	Email                           string     `json:"email"`
+	EmailVerified                   bool       `json:"emailVerified"`
+	EmailVerificationTokenExpiresAt *time.Time `json:"emailVerificationTokenExpiresAt"`
+	PasswordResetTokenExpiresAt     *time.Time `json:"passwordResetTokenExpiresAt"`
+	Username                        string     `json:"username"`
+	DisplayName                     string     `json:"displayName"`
+	IsAdmin                         bool       `json:"isAdmin"`
+	IsPro                           bool       `json:"isPro"`
+	CreatedAt                       time.Time  `json:"createdAt"`
+	UpdatedAt                       time.Time  `json:"updatedAt"`
 }
 
 func newResponseUserAdmin(u user.User) responseUserAdmin {
@@ -129,9 +132,7 @@ func newResponseUserAdmin(u user.User) responseUserAdmin {
 		ID:                              u.ID,
 		Email:                           u.Email,
 		EmailVerified:                   u.EmailVerified,
-		EmailVerificationToken:          u.EmailVerificationToken,
 		EmailVerificationTokenExpiresAt: u.EmailVerificationTokenExpiresAt,
-		PasswordResetToken:              u.PasswordResetToken,
 		PasswordResetTokenExpiresAt:     u.PasswordResetTokenExpiresAt,
 		Username:                        u.Username,
 		DisplayName:                     u.DisplayName,

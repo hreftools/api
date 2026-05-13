@@ -3,8 +3,6 @@ package user
 import (
 	"strings"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 func Test_validateEmail(t *testing.T) {
@@ -220,6 +218,10 @@ func Test_validatePassword(t *testing.T) {
 }
 
 func Test_validateToken(t *testing.T) {
+	// 43-char base64url string — matches the shape of a real token generated
+	// by generateEmailVerificationToken (32 random bytes, RawURLEncoding).
+	const validToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ"
+
 	tests := []struct {
 		name       string
 		input      string
@@ -228,30 +230,42 @@ func Test_validateToken(t *testing.T) {
 	}{
 		{
 			name:    "Valid token",
-			input:   uuid.New().String(),
+			input:   validToken,
 			wantErr: false,
 		},
 		{
-			name:       "Empty Token",
+			name:       "Empty token",
 			input:      "",
 			wantErr:    true,
 			wantErrMsg: "token is required",
 		},
 		{
-			name:       "Invalid Token (not a UUID)",
-			input:      "not-a-uuid",
+			name:       "Token with surrounding whitespace is rejected (not normalized)",
+			input:      " " + validToken + " ",
 			wantErr:    true,
 			wantErrMsg: "token is invalid",
 		},
 		{
-			name:       "Invalid Token (incorrect format, last segment is missing)",
-			input:      "12345678-1234-1234-1234",
+			name:       "Token shorter than 43 characters is rejected",
+			input:      strings.Repeat("a", 42),
 			wantErr:    true,
 			wantErrMsg: "token is invalid",
 		},
 		{
-			name:       "Nil UUID is rejected",
-			input:      "00000000-0000-0000-0000-000000000000",
+			name:       "Token longer than 43 characters is rejected",
+			input:      strings.Repeat("a", 44),
+			wantErr:    true,
+			wantErrMsg: "token is invalid",
+		},
+		{
+			name:       "Token with non-base64url characters is rejected",
+			input:      strings.Repeat("!", 43),
+			wantErr:    true,
+			wantErrMsg: "token is invalid",
+		},
+		{
+			name:       "UUID-formatted token is rejected (wrong length)",
+			input:      "12345678-1234-1234-1234-123456789012",
 			wantErr:    true,
 			wantErrMsg: "token is invalid",
 		},

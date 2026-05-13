@@ -35,10 +35,10 @@ func toUser(u db.User) user.User {
 		ID:                              u.ID,
 		Email:                           u.Email,
 		EmailVerified:                   u.EmailVerified,
-		EmailVerificationToken:          u.EmailVerificationToken,
+		EmailVerificationTokenHash:      u.EmailVerificationTokenHash,
 		EmailVerificationTokenExpiresAt: u.EmailVerificationTokenExpiresAt,
 		Password:                        u.Password,
-		PasswordResetToken:              u.PasswordResetToken,
+		PasswordResetTokenHash:          u.PasswordResetTokenHash,
 		PasswordResetTokenExpiresAt:     u.PasswordResetTokenExpiresAt,
 		Username:                        u.Username,
 		DisplayName:                     u.DisplayName,
@@ -78,16 +78,16 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (user.Use
 	return toUser(row), nil
 }
 
-func (r *UserRepository) GetByEmailVerificationToken(ctx context.Context, emailVerificationToken uuid.UUID) (user.User, error) {
-	row, err := r.queries.GetUserByEmailVerificationToken(ctx, uuid.NullUUID{Valid: true, UUID: emailVerificationToken})
+func (r *UserRepository) GetByEmailVerificationTokenHash(ctx context.Context, hash string) (user.User, error) {
+	row, err := r.queries.GetUserByEmailVerificationTokenHash(ctx, &hash)
 	if err != nil {
 		return user.User{}, translateUserError(err)
 	}
 	return toUser(row), nil
 }
 
-func (r *UserRepository) GetByPasswordResetToken(ctx context.Context, token uuid.UUID) (user.User, error) {
-	row, err := r.queries.GetUserByPasswordResetToken(ctx, uuid.NullUUID{Valid: true, UUID: token})
+func (r *UserRepository) GetByPasswordResetTokenHash(ctx context.Context, hash string) (user.User, error) {
+	row, err := r.queries.GetUserByPasswordResetTokenHash(ctx, &hash)
 	if err != nil {
 		return user.User{}, translateUserError(err)
 	}
@@ -98,7 +98,7 @@ func (r *UserRepository) Create(ctx context.Context, params user.CreateParams) (
 	args := db.CreateUserParams{
 		Email:                           params.Email,
 		EmailVerified:                   params.EmailVerified,
-		EmailVerificationToken:          params.EmailVerificationToken,
+		EmailVerificationTokenHash:      params.EmailVerificationTokenHash,
 		EmailVerificationTokenExpiresAt: params.EmailVerificationTokenExpiresAt,
 		Password:                        params.Password,
 		Username:                        params.Username,
@@ -125,7 +125,7 @@ func (r *UserRepository) Verify(ctx context.Context, id uuid.UUID) (user.User, e
 func (r *UserRepository) UpdateVerificationToken(ctx context.Context, params user.UpdateVerificationTokenParams) (user.User, error) {
 	args := db.UpdateVerificationTokenParams{
 		ID:                              params.ID,
-		EmailVerificationToken:          params.EmailVerificationToken,
+		EmailVerificationTokenHash:      params.EmailVerificationTokenHash,
 		EmailVerificationTokenExpiresAt: params.EmailVerificationTokenExpiresAt,
 	}
 	row, err := r.queries.UpdateVerificationToken(ctx, args)
@@ -138,7 +138,7 @@ func (r *UserRepository) UpdateVerificationToken(ctx context.Context, params use
 func (r *UserRepository) UpdatePasswordResetToken(ctx context.Context, params user.UpdatePasswordResetTokenParams) (user.User, error) {
 	args := db.UpdatePasswordResetTokenParams{
 		ID:                          params.ID,
-		PasswordResetToken:          params.PasswordResetToken,
+		PasswordResetTokenHash:      params.PasswordResetTokenHash,
 		PasswordResetTokenExpiresAt: params.PasswordResetTokenExpiresAt,
 	}
 	row, err := r.queries.UpdatePasswordResetToken(ctx, args)

@@ -6,10 +6,10 @@ WHERE
     $1
 LIMIT 1;
 
--- name: GetUserByEmailVerificationToken :one
+-- name: GetUserByEmailVerificationTokenHash :one
 SELECT * FROM users
 WHERE
-    email_verification_token
+    email_verification_token_hash
     =
     $1
 LIMIT 1;
@@ -30,7 +30,7 @@ ORDER BY created_at;
 INSERT INTO users (
     email,
     email_verified,
-    email_verification_token,
+    email_verification_token_hash,
     email_verification_token_expires_at,
     password,
     username,
@@ -46,7 +46,7 @@ RETURNING *;
 UPDATE users
 SET
     email_verified = TRUE,
-    email_verification_token = NULL,
+    email_verification_token_hash = NULL,
     email_verification_token_expires_at = NULL
 WHERE id = $1
 RETURNING *;
@@ -54,20 +54,20 @@ RETURNING *;
 -- name: UpdateVerificationToken :one
 UPDATE users
 SET
-    email_verification_token = $2,
+    email_verification_token_hash = $2,
     email_verification_token_expires_at = $3
 WHERE id = $1
 RETURNING *;
 
--- name: GetUserByPasswordResetToken :one
+-- name: GetUserByPasswordResetTokenHash :one
 SELECT * FROM users
-WHERE password_reset_token = $1
+WHERE password_reset_token_hash = $1
 LIMIT 1;
 
 -- name: UpdatePasswordResetToken :one
 UPDATE users
 SET
-    password_reset_token = $2,
+    password_reset_token_hash = $2,
     password_reset_token_expires_at = $3
 WHERE id = $1
 RETURNING *;
@@ -76,10 +76,10 @@ RETURNING *;
 UPDATE users
 SET
     password = $2,
-    password_reset_token = NULL,
+    password_reset_token_hash = NULL,
     password_reset_token_expires_at = NULL,
     email_verified = TRUE,
-    email_verification_token = NULL,
+    email_verification_token_hash = NULL,
     email_verification_token_expires_at = NULL
 WHERE id = $1
 RETURNING *;

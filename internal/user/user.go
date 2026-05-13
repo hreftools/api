@@ -10,10 +10,10 @@ type User struct {
 	ID                              uuid.UUID
 	Email                           string
 	EmailVerified                   bool
-	EmailVerificationToken          uuid.NullUUID
+	EmailVerificationTokenHash      *string
 	EmailVerificationTokenExpiresAt *time.Time
 	Password                        string
-	PasswordResetToken              uuid.NullUUID
+	PasswordResetTokenHash          *string
 	PasswordResetTokenExpiresAt     *time.Time
 	Username                        string
 	DisplayName                     string

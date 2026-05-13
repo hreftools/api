@@ -22,7 +22,7 @@ import (
 type CreateParams struct {
 	Email                           string
 	EmailVerified                   bool
-	EmailVerificationToken          uuid.NullUUID
+	EmailVerificationTokenHash      *string
 	EmailVerificationTokenExpiresAt *time.Time
 	Password                        string
 	Username                        string
@@ -33,13 +33,13 @@ type CreateParams struct {
 
 type UpdateVerificationTokenParams struct {
 	ID                              uuid.UUID
-	EmailVerificationToken          uuid.NullUUID
+	EmailVerificationTokenHash      *string
 	EmailVerificationTokenExpiresAt *time.Time
 }
 
 type UpdatePasswordResetTokenParams struct {
 	ID                          uuid.UUID
-	PasswordResetToken          uuid.NullUUID
+	PasswordResetTokenHash      *string
 	PasswordResetTokenExpiresAt *time.Time
 }
 
@@ -47,8 +47,8 @@ type Repository interface {
 	List(ctx context.Context) ([]User, error)
 	GetById(ctx context.Context, id uuid.UUID) (User, error)
 	GetByEmail(ctx context.Context, email string) (User, error)
-	GetByEmailVerificationToken(ctx context.Context, token uuid.UUID) (User, error)
-	GetByPasswordResetToken(ctx context.Context, token uuid.UUID) (User, error)
+	GetByEmailVerificationTokenHash(ctx context.Context, hash string) (User, error)
+	GetByPasswordResetTokenHash(ctx context.Context, hash string) (User, error)
 	Create(ctx context.Context, params CreateParams) (User, error)
 	Verify(ctx context.Context, id uuid.UUID) (User, error)
 	UpdateVerificationToken(ctx context.Context, params UpdateVerificationTokenParams) (User, error)
@@ -317,13 +317,17 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
+	token, err := generateEmailVerificationToken()
+	if err != nil {
+		return fmt.Errorf("failed to generate verification token: %w", err)
+	}
+	tokenHash := hashEmailVerificationToken(token)
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
 	_, err = s.UserRepo.Create(ctx, CreateParams{
 		Email:                           email,
 		EmailVerified:                   false,
-		EmailVerificationToken:          token,
+		EmailVerificationTokenHash:      &tokenHash,
 		EmailVerificationTokenExpiresAt: &expiresAt,
 		Password:                        passwordHash,
 		Username:                        username,
@@ -338,7 +342,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	emailVerifyData := emails.AuthSignupParams{
 		Username: username,
 		Email:    email,
-		Url:      s.AppURL + "/auth/signup/" + token.UUID.String(),
+		Url:      s.AppURL + "/auth/signup/" + token,
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthSignupTemplateHtml, emailVerifyData)
 	if err != nil {
@@ -427,14 +431,13 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 }
 
 // Verify validates a verification token and marks the user as verified.
-func (s *Service) Verify(ctx context.Context, tokenStr string) error {
-	tokenStr, err := validateToken(tokenStr)
+func (s *Service) Verify(ctx context.Context, token string) error {
+	token, err := validateToken(token)
 	if err != nil {
 		return err
 	}
-	token, _ := uuid.Parse(tokenStr)
 
-	u, err := s.UserRepo.GetByEmailVerificationToken(ctx, token)
+	u, err := s.UserRepo.GetByEmailVerificationTokenHash(ctx, hashEmailVerificationToken(token))
 	if err != nil {
 		return err
 	}
@@ -474,12 +477,16 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		return ErrResendTooFrequent
 	}
 
-	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
+	token, err := generateEmailVerificationToken()
+	if err != nil {
+		return fmt.Errorf("failed to generate verification token: %w", err)
+	}
+	tokenHash := hashEmailVerificationToken(token)
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
 	_, err = s.UserRepo.UpdateVerificationToken(ctx, UpdateVerificationTokenParams{
 		ID:                              u.ID,
-		EmailVerificationToken:          token,
+		EmailVerificationTokenHash:      &tokenHash,
 		EmailVerificationTokenExpiresAt: &expiresAt,
 	})
 	if err != nil {
@@ -487,7 +494,7 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 	}
 
 	templateParams := emails.AuthResendVerificationParams{
-		Url: s.AppURL + "/auth/signup/" + token.UUID.String(),
+		Url: s.AppURL + "/auth/signup/" + token,
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResendVerificationTemplateHtml, templateParams)
 	if err != nil {
@@ -533,12 +540,16 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		}
 	}
 
-	token := uuid.NullUUID{Valid: true, UUID: uuid.New()}
+	token, err := generatePasswordResetToken()
+	if err != nil {
+		return fmt.Errorf("failed to generate password reset token: %w", err)
+	}
+	tokenHash := hashPasswordResetToken(token)
 	expiresAt := time.Now().Add(config.PasswordResetTokenExpiryDuration)
 
 	_, err = s.UserRepo.UpdatePasswordResetToken(ctx, UpdatePasswordResetTokenParams{
 		ID:                          u.ID,
-		PasswordResetToken:          token,
+		PasswordResetTokenHash:      &tokenHash,
 		PasswordResetTokenExpiresAt: &expiresAt,
 	})
 	if err != nil {
@@ -546,7 +557,7 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	}
 
 	templateParams := emails.AuthResetPasswordRequestParams{
-		Url: s.AppURL + "/auth/reset-password/" + token.UUID.String(),
+		Url: s.AppURL + "/auth/reset-password/" + token,
 	}
 	bodyHtml, err := emails.RenderTemplateHtml(emails.AuthResetPasswordRequestTemplateHtml, templateParams)
 	if err != nil {
@@ -571,14 +582,13 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 }
 
 // ResetPasswordConfirm validates a reset token and sets the new password.
-func (s *Service) ResetPasswordConfirm(ctx context.Context, tokenStr, newPassword string) error {
-	tokenStr, err := validateToken(tokenStr)
+func (s *Service) ResetPasswordConfirm(ctx context.Context, token, newPassword string) error {
+	token, err := validateToken(token)
 	if err != nil {
 		return err
 	}
-	token, _ := uuid.Parse(tokenStr)
 
-	u, err := s.UserRepo.GetByPasswordResetToken(ctx, token)
+	u, err := s.UserRepo.GetByPasswordResetTokenHash(ctx, hashPasswordResetToken(token))
 	if err != nil {
 		return err
 	}
@@ -672,7 +682,7 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 	return s.UserRepo.Create(ctx, CreateParams{
 		Email:                           email,
 		EmailVerified:                   true,
-		EmailVerificationToken:          uuid.NullUUID{},
+		EmailVerificationTokenHash:      nil,
 		EmailVerificationTokenExpiresAt: nil,
 		Password:                        passwordHash,
 		Username:                        username,
@@ -738,6 +748,59 @@ func generateSession() (string, error) {
 // compare its hash against the stored column.
 func hashSession(session string) string {
 	h := sha256.Sum256([]byte(session))
+	return hex.EncodeToString(h[:])
+}
+
+// emailVerificationTokenRandomBytes is the number of cryptographically random
+// bytes used to generate an email-verification token. 32 bytes = 256 bits of
+// entropy, matching sessions and API tokens. Replaces the previous uuid.New
+// design, whose 122 effective bits were stored as plaintext in the users
+// table — a one-step account takeover if the database ever leaked.
+const emailVerificationTokenRandomBytes = 32
+
+// generateEmailVerificationToken creates a fresh, high-entropy token suitable
+// for embedding in a verification URL emailed to the user. Uses base64 URL-safe
+// encoding (no padding) so the result drops cleanly into a URL path segment.
+func generateEmailVerificationToken() (string, error) {
+	b := make([]byte, emailVerificationTokenRandomBytes)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// hashEmailVerificationToken produces the SHA-256 hex digest stored in the
+// users table. Same rationale as hashSession: the input is a 256-bit CSPRNG
+// output, so a fast hash is sufficient; the goal is purely defence in depth
+// against DB-read exposure.
+func hashEmailVerificationToken(token string) string {
+	h := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(h[:])
+}
+
+// passwordResetTokenRandomBytes is the password-reset counterpart of
+// emailVerificationTokenRandomBytes. Defined separately to match the
+// per-purpose split between generate/hash helpers — same rationale, same
+// 256-bit entropy.
+const passwordResetTokenRandomBytes = 32
+
+// generatePasswordResetToken is the password-reset counterpart of
+// generateEmailVerificationToken. Kept as a separate function (rather than
+// sharing one implementation) to match the existing per-purpose duplication
+// between generateSession and generateToken — the call sites read clearly
+// and the cost is two short functions.
+func generatePasswordResetToken() (string, error) {
+	b := make([]byte, passwordResetTokenRandomBytes)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+// hashPasswordResetToken is the password-reset counterpart of
+// hashEmailVerificationToken. Same rationale; see that function.
+func hashPasswordResetToken(token string) string {
+	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
 }
 

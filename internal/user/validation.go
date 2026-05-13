@@ -1,13 +1,12 @@
 package user
 
 import (
+	"encoding/base64"
 	"net/mail"
 	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
-
-	"github.com/google/uuid"
 )
 
 func validateEmail(e string) (string, error) {
@@ -125,17 +124,22 @@ func validatePassword(p string, contextualValues ...string) (string, error) {
 	return p, nil
 }
 
+// emailTokenBase64Length is the length of a verification or password-reset
+// token after base64url-encoding 32 random bytes with no padding
+// (ceil(32 * 4 / 3) = 43). Tokens always have exactly this length; anything
+// else is malformed and we can reject it without a DB lookup.
+const emailTokenBase64Length = 43
+
 func validateToken(token string) (string, error) {
 	if len(token) == 0 {
 		return token, ErrValidationTokenRequired
 	}
 
-	parsed, err := uuid.Parse(token)
-	if err != nil {
+	if len(token) != emailTokenBase64Length {
 		return token, ErrValidationTokenFormat
 	}
 
-	if parsed == uuid.Nil {
+	if _, err := base64.RawURLEncoding.DecodeString(token); err != nil {
 		return token, ErrValidationTokenFormat
 	}
 
