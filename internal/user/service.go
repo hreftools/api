@@ -317,11 +317,11 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
 
-	token, err := generateEmailVerificationToken()
+	token, err := generateToken()
 	if err != nil {
 		return fmt.Errorf("failed to generate verification token: %w", err)
 	}
-	tokenHash := hashEmailVerificationToken(token)
+	tokenHash := hashToken(token)
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
 	_, err = s.UserRepo.Create(ctx, CreateParams{
@@ -411,7 +411,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 		return SigninResult{}, ErrInvalidCredentials
 	}
 
-	session, err := generateSession()
+	session, err := generateToken()
 	if err != nil {
 		return SigninResult{}, fmt.Errorf("failed to generate session: %w", err)
 	}
@@ -419,7 +419,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 	expiresAt := time.Now().Add(config.SessionExpiryDuration)
 	_, err = s.SessionRepo.Create(ctx, SessionCreateParams{
 		UserID:      u.ID,
-		Hash:        hashSession(session),
+		Hash:        hashToken(session),
 		Description: description,
 		ExpiresAt:   expiresAt,
 	})
@@ -437,7 +437,7 @@ func (s *Service) Verify(ctx context.Context, token string) error {
 		return err
 	}
 
-	u, err := s.UserRepo.GetByEmailVerificationTokenHash(ctx, hashEmailVerificationToken(token))
+	u, err := s.UserRepo.GetByEmailVerificationTokenHash(ctx, hashToken(token))
 	if err != nil {
 		return err
 	}
@@ -477,11 +477,11 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		return ErrResendTooFrequent
 	}
 
-	token, err := generateEmailVerificationToken()
+	token, err := generateToken()
 	if err != nil {
 		return fmt.Errorf("failed to generate verification token: %w", err)
 	}
-	tokenHash := hashEmailVerificationToken(token)
+	tokenHash := hashToken(token)
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
 	_, err = s.UserRepo.UpdateVerificationToken(ctx, UpdateVerificationTokenParams{
@@ -540,11 +540,11 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		}
 	}
 
-	token, err := generatePasswordResetToken()
+	token, err := generateToken()
 	if err != nil {
 		return fmt.Errorf("failed to generate password reset token: %w", err)
 	}
-	tokenHash := hashPasswordResetToken(token)
+	tokenHash := hashToken(token)
 	expiresAt := time.Now().Add(config.PasswordResetTokenExpiryDuration)
 
 	_, err = s.UserRepo.UpdatePasswordResetToken(ctx, UpdatePasswordResetTokenParams{
@@ -588,7 +588,7 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, token, newPassword s
 		return err
 	}
 
-	u, err := s.UserRepo.GetByPasswordResetTokenHash(ctx, hashPasswordResetToken(token))
+	u, err := s.UserRepo.GetByPasswordResetTokenHash(ctx, hashToken(token))
 	if err != nil {
 		return err
 	}
@@ -626,14 +626,14 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, token, newPassword s
 // Signout deletes a session identified by the raw cookie value.
 // The cookie value is hashed before deletion; the DB never sees the secret.
 func (s *Service) Signout(ctx context.Context, session string) error {
-	return s.SessionRepo.DeleteByHash(ctx, hashSession(session))
+	return s.SessionRepo.DeleteByHash(ctx, hashToken(session))
 }
 
 // GetSession retrieves a session record by the raw cookie value (used by auth
 // middleware). The cookie value is hashed before lookup; the DB never sees the
 // secret, so a read-only DB compromise does not yield usable session tokens.
 func (s *Service) GetSession(ctx context.Context, session string) (Session, error) {
-	return s.SessionRepo.GetByHash(ctx, hashSession(session))
+	return s.SessionRepo.GetByHash(ctx, hashToken(session))
 }
 
 // UpdateSessionExpiresAt updates the expiry of a session (used by auth middleware for sliding expiry).
@@ -717,115 +717,51 @@ func (s *Service) DeleteSelf(ctx context.Context, userID uuid.UUID, password str
 	return err
 }
 
-// sessionRandomBytes is the number of cryptographically random bytes used to
-// generate a session. 32 bytes = 256 bits of entropy, matching the API token
-// strength and far exceeding the OWASP minimum (64 bits) for session
-// identifiers. Replaces the previous uuidv7-as-session design, which only
-// carried ~74 bits of randomness and was partially predictable (time-ordered).
-const sessionRandomBytes = 32
-
-// generateSession creates a fresh, high-entropy session string suitable for
-// use as a cookie value. Uses base64 URL-safe encoding (no padding) so the
-// result drops cleanly into a Set-Cookie header — no quoting, no reserved
-// characters. Unlike API tokens, sessions have no prefix: they live in the
-// browser's cookie jar, never get pasted into source code, and don't need
-// secret-scanner identification.
-func generateSession() (string, error) {
-	b := make([]byte, sessionRandomBytes)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-// hashSession produces a SHA-256 hex digest of a session string — i.e. the
-// sessionHash that gets stored in the database. SHA-256 is appropriate here
-// (unlike passwords) because the input is a 256-bit CSPRNG output that cannot
-// be brute-forced — a fast hash is sufficient. The purpose of hashing is
-// defence in depth: if the database is ever read by an attacker (leaked
-// backup, replica access, SQLi elsewhere), the stored hashes cannot be used
-// as session cookies because the browser sends the raw value and we only ever
-// compare its hash against the stored column.
-func hashSession(session string) string {
-	h := sha256.Sum256([]byte(session))
-	return hex.EncodeToString(h[:])
-}
-
-// emailVerificationTokenRandomBytes is the number of cryptographically random
-// bytes used to generate an email-verification token. 32 bytes = 256 bits of
-// entropy, matching sessions and API tokens. Replaces the previous uuid.New
-// design, whose 122 effective bits were stored as plaintext in the users
-// table — a one-step account takeover if the database ever leaked.
-const emailVerificationTokenRandomBytes = 32
-
-// generateEmailVerificationToken creates a fresh, high-entropy token suitable
-// for embedding in a verification URL emailed to the user. Uses base64 URL-safe
-// encoding (no padding) so the result drops cleanly into a URL path segment.
-func generateEmailVerificationToken() (string, error) {
-	b := make([]byte, emailVerificationTokenRandomBytes)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-// hashEmailVerificationToken produces the SHA-256 hex digest stored in the
-// users table. Same rationale as hashSession: the input is a 256-bit CSPRNG
-// output, so a fast hash is sufficient; the goal is purely defence in depth
-// against DB-read exposure.
-func hashEmailVerificationToken(token string) string {
-	h := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(h[:])
-}
-
-// passwordResetTokenRandomBytes is the password-reset counterpart of
-// emailVerificationTokenRandomBytes. Defined separately to match the
-// per-purpose split between generate/hash helpers — same rationale, same
-// 256-bit entropy.
-const passwordResetTokenRandomBytes = 32
-
-// generatePasswordResetToken is the password-reset counterpart of
-// generateEmailVerificationToken. Kept as a separate function (rather than
-// sharing one implementation) to match the existing per-purpose duplication
-// between generateSession and generateToken — the call sites read clearly
-// and the cost is two short functions.
-func generatePasswordResetToken() (string, error) {
-	b := make([]byte, passwordResetTokenRandomBytes)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return base64.RawURLEncoding.EncodeToString(b), nil
-}
-
-// hashPasswordResetToken is the password-reset counterpart of
-// hashEmailVerificationToken. Same rationale; see that function.
-func hashPasswordResetToken(token string) string {
-	h := sha256.Sum256([]byte(token))
-	return hex.EncodeToString(h[:])
-}
-
-// tokenPrefix is prepended to every generated API token so that leaked tokens
-// can be identified and traced back to this service (e.g. by secret scanners).
-const tokenPrefix = "urlspace_"
-
-// tokenRandomBytes is the number of cryptographically random bytes used to
-// generate the random part of an API token. 32 bytes = 256 bits of entropy,
-// which is more than sufficient to prevent brute-force guessing.
+// tokenRandomBytes is the entropy budget for every server-issued bearer
+// credential generated by this package — sessions, API tokens, email
+// verification tokens, and password reset tokens. 32 bytes = 256 bits, far
+// exceeding the OWASP minimum (64 bits) for session identifiers and
+// unguessable by any realistic attacker. Replaces the earlier uuidv7-as-session
+// and uuid.New-as-email-token designs, which carried only ~74 and ~122
+// effective bits respectively and were stored as plaintext.
 const tokenRandomBytes = 32
 
-// generateToken creates a new API token in the format "urlspace_<random>", where
-// <random> is a base64url-encoded string derived from 32 random bytes.
+// tokenPrefix is prepended to every generated API token (and only API tokens)
+// so leaked Bearer values can be recognised in source code and logs by secret
+// scanners. Sessions live in cookies, email tokens live in URL paths — neither
+// is ever pasted into a repository, so neither needs the marker.
+const tokenPrefix = "urlspace_"
+
+// generateToken returns a fresh, high-entropy random string suitable for any
+// server-issued opaque bearer credential — a session cookie value, an API
+// token (after the caller prepends tokenPrefix), or a verification/reset URL
+// path segment. The output is base64 URL-safe with no padding so it drops
+// cleanly into any of those contexts without escaping.
+//
+// The prefix on API tokens is added at the single call site that needs it
+// rather than here: the prefix is purely cosmetic (for secret scanners) and
+// keeping this helper prefix-free lets one function serve all four flows.
 func generateToken() (string, error) {
 	b := make([]byte, tokenRandomBytes)
 	if _, err := rand.Read(b); err != nil {
 		return "", err
 	}
-	return tokenPrefix + base64.RawURLEncoding.EncodeToString(b), nil
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
-// hashToken produces a SHA-256 hex digest of the given token. SHA-256 is
-// appropriate here (unlike passwords) because API tokens are high-entropy
-// random strings that cannot be brute-forced — a fast hash is sufficient.
+// hashToken produces the SHA-256 hex digest stored in any *hash column —
+// sessions.hash, tokens.hash, users.email_verification_token_hash,
+// users.password_reset_token_hash. The raw token leaves the server only
+// once (in a Set-Cookie header, a one-time TokenCreate response, or an
+// email URL); the database only ever sees the digest.
+//
+// SHA-256 is appropriate here precisely because the input is 256-bit CSPRNG
+// output: an attacker cannot brute-force what they cannot enumerate, so a
+// fast hash is sufficient and a slow one (Argon2 etc.) would only burn CPU
+// on every auth check. The hashing exists for defence in depth — a read-only
+// DB compromise (leaked backup, replica access, SQLi elsewhere) yields no
+// usable credentials of any kind, because the client always sends the raw
+// value and we only ever compare its hash against the stored column.
 func hashToken(token string) string {
 	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
@@ -861,21 +797,25 @@ func (s *Service) TokenCreate(ctx context.Context, userID uuid.UUID, password, d
 		return TokenCreateResult{}, ErrInvalidCredentials
 	}
 
-	rawToken, err := generateToken()
+	token, err := generateToken()
 	if err != nil {
 		return TokenCreateResult{}, fmt.Errorf("failed to generate token: %w", err)
 	}
+	// API tokens are the only credential that gets the human-readable prefix —
+	// see tokenPrefix's doc comment. Sessions and email tokens stay prefix-free
+	// because they're never pasted into source code.
+	token = tokenPrefix + token
 
 	_, err = s.TokenRepo.Create(ctx, TokenCreateParams{
 		UserID:      userID,
 		Description: description,
-		Hash:        hashToken(rawToken),
+		Hash:        hashToken(token),
 	})
 	if err != nil {
 		return TokenCreateResult{}, err
 	}
 
-	return TokenCreateResult{RawToken: rawToken}, nil
+	return TokenCreateResult{RawToken: token}, nil
 }
 
 // TokenList returns all API tokens for the given user.
@@ -899,8 +839,8 @@ func (s *Service) TokenDeleteAll(ctx context.Context, userID uuid.UUID) error {
 }
 
 // GetTokenByHash retrieves a token by its hash (used by auth middleware).
-func (s *Service) GetTokenByHash(ctx context.Context, rawToken string) (Token, error) {
-	return s.TokenRepo.GetByHash(ctx, hashToken(rawToken))
+func (s *Service) GetTokenByHash(ctx context.Context, token string) (Token, error) {
+	return s.TokenRepo.GetByHash(ctx, hashToken(token))
 }
 
 // UpdateTokenLastUsedAt updates the last_used_at timestamp (used by auth middleware).

@@ -218,8 +218,8 @@ func Test_validatePassword(t *testing.T) {
 }
 
 func Test_validateToken(t *testing.T) {
-	// 43-char base64url string — matches the shape of a real token generated
-	// by generateEmailVerificationToken (32 random bytes, RawURLEncoding).
+	// 43-char base64url string — matches the shape of a real token produced
+	// by generateToken (32 random bytes, RawURLEncoding).
 	const validToken = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ"
 
 	tests := []struct {
