@@ -395,20 +395,26 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 	}
 
 	u, err := s.UserRepo.GetByEmail(ctx, email)
-	if err != nil {
-		if errors.Is(err, ErrNotFound) {
-			passwordMatchesHash(password, dummyHash) // prevent timing-based user enumeration
-			return SigninResult{}, ErrInvalidCredentials
-		}
+	userExists := err == nil
+	if err != nil && !errors.Is(err, ErrNotFound) {
 		return SigninResult{}, err
 	}
 
+	// Always run the hash check, and defer the verified check until after the
+	// password is known correct. Otherwise status code (403 vs 401) and timing
+	// (skipped argon2id) both leak whether an email is registered.
+	hash := dummyHash
+	if userExists {
+		hash = u.Password
+	}
+	if !passwordMatchesHash(password, hash) {
+		return SigninResult{}, ErrInvalidCredentials
+	}
+	if !userExists {
+		return SigninResult{}, ErrInvalidCredentials
+	}
 	if !u.EmailVerified {
 		return SigninResult{}, ErrEmailNotVerified
-	}
-
-	if !passwordMatchesHash(password, u.Password) {
-		return SigninResult{}, ErrInvalidCredentials
 	}
 
 	session, err := generateToken()
