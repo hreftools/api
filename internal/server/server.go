@@ -77,6 +77,7 @@ func New(port string, appURL string, userSvc *user.Service, tagSvc *tag.Service,
 	stack := middlewareStack(
 		loggingMiddleware,
 		commonHeadersMiddleware(appURL),
+		recoveryMiddleware,
 		maxBodySizeMiddleware,
 	)
 
