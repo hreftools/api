@@ -2,6 +2,18 @@ package server
 
 import "net/http"
 
+// Decisions for future me:
+//
+//   - No Vary: Origin / Vary: Cookie. Cache-Control: no-store already prevents
+//     any cache from storing these responses, so there is no cache key for
+//     Vary to influence. Revisit if no-store is ever weakened or removed.
+//
+//   - No CSRF Origin-check middleware. SameSite=Lax on the session cookie
+//     blocks cross-site cookie-bearing POST/PUT/DELETE at the browser level,
+//     and all JSON endpoints are non-simple under CORS so they require a
+//     preflight that the Origin check below only approves for appURL. An
+//     Origin-check middleware was prototyped and rejected because it broke
+//     the Bruno-based REST workflow (which can't set a custom Origin).
 func commonHeadersMiddleware(appURL string) middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -322,6 +322,12 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 	tokenHash := hashToken(token)
 	expiresAt := time.Now().Add(config.EmailVerificationTokenExpiryDuration)
 
+	// Decision (future me): ErrConflict on duplicate email/username surfaces
+	// as 409, which is an account-enumeration oracle. Deliberately not fixed
+	// here — silent-success would leave real users wondering why no email
+	// ever arrives, hurting signup conversion. Rate-limiting at the request
+	// layer is the chosen compensating control. Revisit if rate-limiting
+	// proves insufficient or enumeration becomes a real attack target.
 	_, err = s.UserRepo.Create(ctx, CreateParams{
 		Email:                           email,
 		EmailVerified:                   false,
@@ -398,9 +404,9 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 		return SigninResult{}, err
 	}
 
-	// Always run the hash check, and defer the verified check until after the
-	// password is known correct. Otherwise status code (403 vs 401) and timing
-	// (skipped argon2id) both leak whether an email is registered.
+	// Decision (future me): always run the hash check before the EmailVerified
+	// check. Otherwise status code (403 vs 401) and timing (skipped argon2id)
+	// both leak whether an email is registered. Do not "tidy" the order.
 	hash := dummyHash
 	if userExists {
 		hash = u.Password
@@ -480,6 +486,8 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 
 	tokenAge := config.EmailVerificationTokenExpiryDuration - time.Until(*u.EmailVerificationTokenExpiresAt)
 	if tokenAge < time.Minute*5 {
+		// Decision (future me): silent return (not 429) — see function doc.
+		// A 429 here would confirm the email is registered and unverified.
 		slog.InfoContext(ctx, "verification resend throttled", "user_id", u.ID)
 		return nil
 	}
@@ -545,6 +553,8 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 	if u.PasswordResetTokenExpiresAt != nil {
 		tokenAge := config.PasswordResetTokenExpiryDuration - time.Until(*u.PasswordResetTokenExpiresAt)
 		if tokenAge < time.Minute*5 {
+			// Decision (future me): silent return (not 429) — see function doc.
+			// A 429 here would confirm the email is registered.
 			slog.InfoContext(ctx, "password reset throttled", "user_id", u.ID)
 			return nil
 		}
