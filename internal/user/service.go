@@ -357,15 +357,29 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
-		To:      []string{email},
-		Text:    bodyText,
-		Html:    bodyHtml,
-		Subject: "Hello from url.space",
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to send email", "error", err)
-	}
+	// Decision (future me): fire-and-forget. Synchronous Send creates a
+	// timing oracle (registered-email path is ~Resend RTT slower than
+	// silent-success branches) and couples request latency to Resend
+	// availability. WithoutCancel is required, not defensive — the request
+	// context is cancelled the moment this handler returns, which would
+	// abort the in-flight Resend call. Recover protects the process from
+	// a panic in a detached goroutine.
+	detached := context.WithoutCancel(ctx)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.ErrorContext(detached, "email send panicked", "recover", r)
+			}
+		}()
+		if err := s.EmailSender.Send(detached, emails.EmailSendParams{
+			To:      []string{email},
+			Text:    bodyText,
+			Html:    bodyHtml,
+			Subject: "Hello from url.space",
+		}); err != nil {
+			slog.ErrorContext(detached, "failed to send email", "error", err)
+		}
+	}()
 
 	return nil
 }
@@ -520,15 +534,29 @@ func (s *Service) ResendVerification(ctx context.Context, email string) error {
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
-		To:      []string{email},
-		Text:    bodyText,
-		Html:    bodyHtml,
-		Subject: "Verification token has been requested",
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to send email", "error", err)
-	}
+	// Decision (future me): fire-and-forget. Synchronous Send creates a
+	// timing oracle (registered-email path is ~Resend RTT slower than
+	// silent-success branches) and couples request latency to Resend
+	// availability. WithoutCancel is required, not defensive — the request
+	// context is cancelled the moment this handler returns, which would
+	// abort the in-flight Resend call. Recover protects the process from
+	// a panic in a detached goroutine.
+	detached := context.WithoutCancel(ctx)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.ErrorContext(detached, "email send panicked", "recover", r)
+			}
+		}()
+		if err := s.EmailSender.Send(detached, emails.EmailSendParams{
+			To:      []string{email},
+			Text:    bodyText,
+			Html:    bodyHtml,
+			Subject: "Verification token has been requested",
+		}); err != nil {
+			slog.ErrorContext(detached, "failed to send email", "error", err)
+		}
+	}()
 
 	return nil
 }
@@ -588,15 +616,29 @@ func (s *Service) ResetPasswordRequest(ctx context.Context, email string) error 
 		return fmt.Errorf("failed to render text email template: %w", err)
 	}
 
-	err = s.EmailSender.Send(ctx, emails.EmailSendParams{
-		To:      []string{email},
-		Text:    bodyText,
-		Html:    bodyHtml,
-		Subject: "Password reset has been requested",
-	})
-	if err != nil {
-		slog.ErrorContext(ctx, "failed to send email", "error", err)
-	}
+	// Decision (future me): fire-and-forget. Synchronous Send creates a
+	// timing oracle (registered-email path is ~Resend RTT slower than
+	// silent-success branches) and couples request latency to Resend
+	// availability. WithoutCancel is required, not defensive — the request
+	// context is cancelled the moment this handler returns, which would
+	// abort the in-flight Resend call. Recover protects the process from
+	// a panic in a detached goroutine.
+	detached := context.WithoutCancel(ctx)
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				slog.ErrorContext(detached, "email send panicked", "recover", r)
+			}
+		}()
+		if err := s.EmailSender.Send(detached, emails.EmailSendParams{
+			To:      []string{email},
+			Text:    bodyText,
+			Html:    bodyHtml,
+			Subject: "Password reset has been requested",
+		}); err != nil {
+			slog.ErrorContext(detached, "failed to send email", "error", err)
+		}
+	}()
 
 	return nil
 }
