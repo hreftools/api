@@ -98,7 +98,7 @@ All JSON responses: `{"status": "ok"|"error", "data": ...}`
 
 Two auth methods, configured per-route via `AuthConfig{UseSession, UseToken}`:
 
-- **Sessions** — UUID stored in `session_id` cookie. Have a 30-day sliding expiry (renewed when < 15 days remaining). Used for browser-based access.
+- **Sessions** — random token stored in `session` cookie (hashed in DB). Have a 30-day sliding expiry (renewed when < 15 days remaining). Used for browser-based access.
 - **API Tokens** — Format `yp_<random>`, sent via `Authorization: Bearer <token>` header. No expiry. Stored as SHA-256 hash. Used for programmatic access.
 
 Cookie is checked first. On success, user ID is stored in request context via `config.UserIDContextKey`. Token management endpoints require session auth only.

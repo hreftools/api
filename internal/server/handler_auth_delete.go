@@ -34,7 +34,7 @@ func handleAuthDelete(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		clearSessionCookie(w)
+		clearSessionCookie(w, r)
 
 		writeJSONSuccess(w, http.StatusOK, authDeleteResponse{
 			Status: "ok",

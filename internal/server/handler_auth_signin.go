@@ -44,7 +44,7 @@ func handleAuthSignin(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		setSessionCookie(w, result.Session, result.ExpiresAt)
+		setSessionCookie(w, r, result.Session, result.ExpiresAt)
 
 		writeJSONSuccess(w, http.StatusOK, authSigninResponse{
 			Status: "ok",

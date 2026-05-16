@@ -192,27 +192,41 @@ func userIDFromContext(ctx context.Context) (uuid.UUID, bool) {
 	return id, ok
 }
 
-func setSessionCookie(w http.ResponseWriter, value string, expires time.Time) {
+// Decision (future me): cookie Domain is derived from r.Host so the same code
+// works for local dev (localhost: empty Domain, host-only, shared across ports
+// because cookies aren't port-scoped) and production (api.url.space: Domain
+// "url.space" so url.space SSR can also read the cookie).
+func setSessionCookie(w http.ResponseWriter, r *http.Request, value string, expires time.Time) {
 	if expires.IsZero() {
 		slog.Error("setSessionCookie called with zero expires time, cookie not set")
 		return
+	}
+	domain := "url.space"
+	if strings.Contains(r.Host, "localhost") {
+		domain = ""
 	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     config.SessionCookieName,
 		Value:    value,
 		Expires:  expires,
 		Path:     "/",
+		Domain:   domain,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func clearSessionCookie(w http.ResponseWriter) {
+func clearSessionCookie(w http.ResponseWriter, r *http.Request) {
+	domain := "url.space"
+	if strings.Contains(r.Host, "localhost") {
+		domain = ""
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     config.SessionCookieName,
 		MaxAge:   -1,
 		Path:     "/",
+		Domain:   domain,
 		HttpOnly: true,
 		Secure:   true,
 		SameSite: http.SameSiteLaxMode,

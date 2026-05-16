@@ -59,7 +59,7 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 	// call. Recover protects the process from a panic in pgx/tracing/etc.,
 	// since an unrecovered panic in a goroutine crashes the whole API server.
 	if time.Now().After(sess.ExpiresAt) {
-		clearSessionCookie(w)
+		clearSessionCookie(w, r)
 		writeJSONError(w, http.StatusUnauthorized, "unauthorized")
 		detached := context.WithoutCancel(r.Context())
 		go func() {
@@ -85,7 +85,7 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 	// since an unrecovered panic in a goroutine crashes the whole API server.
 	if time.Until(sess.ExpiresAt) < config.SessionRenewalThreshold {
 		newExpiresAt := time.Now().Add(config.SessionExpiryDuration)
-		setSessionCookie(w, session, newExpiresAt)
+		setSessionCookie(w, r, session, newExpiresAt)
 		detached := context.WithoutCancel(r.Context())
 		go func() {
 			defer func() {

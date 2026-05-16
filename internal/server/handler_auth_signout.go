@@ -21,7 +21,7 @@ func handleAuthSignout(svc *user.Service) http.HandlerFunc {
 			return
 		}
 
-		clearSessionCookie(w)
+		clearSessionCookie(w, r)
 
 		writeJSONSuccess(w, http.StatusOK, authSignoutResponse{
 			Status: "ok",
