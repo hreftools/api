@@ -9,6 +9,8 @@ import (
 
 	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/user"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type AuthConfig struct {
@@ -100,6 +102,8 @@ func authenticateSession(w http.ResponseWriter, r *http.Request, svc *user.Servi
 		}()
 	}
 
+	trace.SpanFromContext(r.Context()).SetAttributes(attribute.String("user.id", sess.UserID.String()))
+
 	ctx := context.WithValue(r.Context(), config.UserIDContextKey, sess.UserID)
 	next.ServeHTTP(w, r.WithContext(ctx))
 }
@@ -131,6 +135,8 @@ func authenticateToken(w http.ResponseWriter, r *http.Request, svc *user.Service
 		}()
 		_ = svc.UpdateTokenLastUsedAt(detached, token.ID)
 	}()
+
+	trace.SpanFromContext(r.Context()).SetAttributes(attribute.String("user.id", token.UserID.String()))
 
 	ctx := context.WithValue(r.Context(), config.UserIDContextKey, token.UserID)
 	next.ServeHTTP(w, r.WithContext(ctx))
