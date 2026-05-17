@@ -17,6 +17,7 @@ import (
 	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/emails"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 	"golang.org/x/crypto/argon2"
 )
 
@@ -154,6 +155,8 @@ func passwordHash(ctx context.Context, password string) (string, error) {
 	// completely different hashes (prevents rainbow table attacks).
 	salt := make([]byte, argonSaltLength)
 	if _, err := rand.Read(salt); err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return "", err
 	}
 
@@ -200,6 +203,8 @@ func passwordMatchesHash(ctx context.Context, password, hash string) bool {
 	_, err := fmt.Sscanf(hash, "$argon2id$v=%d$m=%d,t=%d,p=%d$%s",
 		&version, &memory, &iterations, &parallelism, &saltB64)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false
 	}
 
@@ -207,6 +212,9 @@ func passwordMatchesHash(ctx context.Context, password, hash string) bool {
 	// whitespace, not until $. Split on the first $ to separate them.
 	parts := strings.SplitN(saltB64, "$", 2)
 	if len(parts) != 2 {
+		err := errors.New("invalid argon2 hash format")
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false
 	}
 	saltB64 = parts[0]
@@ -215,10 +223,14 @@ func passwordMatchesHash(ctx context.Context, password, hash string) bool {
 	// Decode the base64-encoded salt and expected key back into raw bytes.
 	salt, err := base64.RawStdEncoding.DecodeString(saltB64)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false
 	}
 	expectedKey, err := base64.RawStdEncoding.DecodeString(keyB64)
 	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
 		return false
 	}
 

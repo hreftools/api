@@ -8,6 +8,7 @@ import (
 	"github.com/urlspace/api/internal/link"
 	"github.com/urlspace/api/internal/tag"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/codes"
 )
 
 var tracer = otel.Tracer("github.com/urlspace/api/internal/uow")
@@ -157,6 +158,10 @@ func (s *Service) CreateLink(ctx context.Context, params CreateLinkParams) (Enri
 
 		return nil
 	})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
 
 	return result, err
 }
@@ -238,6 +243,10 @@ func (s *Service) UpdateLink(ctx context.Context, params UpdateLinkParams) (Enri
 
 		return nil
 	})
+	if err != nil {
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+	}
 
 	return result, err
 }
