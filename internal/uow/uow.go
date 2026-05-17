@@ -7,7 +7,10 @@ import (
 	"github.com/urlspace/api/internal/collection"
 	"github.com/urlspace/api/internal/link"
 	"github.com/urlspace/api/internal/tag"
+	"go.opentelemetry.io/otel"
 )
+
+var tracer = otel.Tracer("github.com/urlspace/api/internal/uow")
 
 // Repositories groups all repositories available within a transaction. It lives here
 // because the uow package coordinates across multiple domain repositories.
@@ -106,6 +109,9 @@ func (s *Service) CreateLink(ctx context.Context, params CreateLinkParams) (Enri
 		return EnrichedLink{}, err
 	}
 
+	ctx, span := tracer.Start(ctx, "uow.CreateLink")
+	defer span.End()
+
 	var result EnrichedLink
 
 	err = s.uow.RunInTx(ctx, func(repos Repositories) error {
@@ -182,6 +188,9 @@ func (s *Service) UpdateLink(ctx context.Context, params UpdateLinkParams) (Enri
 	if err != nil {
 		return EnrichedLink{}, err
 	}
+
+	ctx, span := tracer.Start(ctx, "uow.UpdateLink")
+	defer span.End()
 
 	var result EnrichedLink
 

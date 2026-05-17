@@ -16,8 +16,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/urlspace/api/internal/config"
 	"github.com/urlspace/api/internal/emails"
+	"go.opentelemetry.io/otel"
 	"golang.org/x/crypto/argon2"
 )
+
+var tracer = otel.Tracer("github.com/urlspace/api/internal/user")
 
 type CreateParams struct {
 	Email                           string
@@ -142,7 +145,10 @@ const (
 // Storing the parameters alongside the hash means you can change the cost
 // parameters in the future (e.g. increase memory) without breaking existing
 // hashes — each hash carries the exact parameters needed to verify it.
-func passwordHash(password string) (string, error) {
+func passwordHash(ctx context.Context, password string) (string, error) {
+	_, span := tracer.Start(ctx, "user.password.hash")
+	defer span.End()
+
 	// Generate a cryptographically random salt. Each password gets its own
 	// unique salt so that two users with the same password will have
 	// completely different hashes (prevents rainbow table attacks).
@@ -175,7 +181,10 @@ func passwordHash(password string) (string, error) {
 // the stored hash string, then re-derives the key from the candidate
 // password using the same parameters. If the derived key matches the
 // stored key, the password is correct.
-func passwordMatchesHash(password, hash string) bool {
+func passwordMatchesHash(ctx context.Context, password, hash string) bool {
+	_, span := tracer.Start(ctx, "user.password.match.hash")
+	defer span.End()
+
 	// Parse the stored hash string to extract the algorithm parameters,
 	// salt, and expected key. Sscanf reads structured data from a string
 	// using a format template — each %d/%s maps to one of the variables.
@@ -269,10 +278,10 @@ var (
 	ErrValidationTokenDescriptionRequired = errors.New("token description is required")
 	ErrValidationTokenDescriptionTooLong  = errors.New("token description must be at most 255 characters")
 
-	ErrNotFound                 = errors.New("not found")
-	ErrConflict                 = errors.New("conflict")
-	ErrInvalidCredentials       = errors.New("invalid credentials")
-	ErrEmailNotVerified         = errors.New("invalid email or password")
+	ErrNotFound           = errors.New("not found")
+	ErrConflict           = errors.New("conflict")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrEmailNotVerified   = errors.New("invalid email or password")
 	ErrTokenExpired       = errors.New("token has expired")
 )
 
@@ -310,7 +319,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 		return err
 	}
 
-	passwordHash, err := passwordHash(password)
+	passwordHash, err := passwordHash(ctx, password)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -389,7 +398,7 @@ func (s *Service) Signup(ctx context.Context, username, email, password string) 
 // hash computation against this dummy so the response time is indistinguishable
 // from a wrong-password attempt.
 var dummyHash = func() string {
-	h, err := passwordHash("dummy-password-never-matches")
+	h, err := passwordHash(context.Background(), "dummy-password-never-matches")
 	if err != nil {
 		panic("failed to generate dummy hash: " + err.Error())
 	}
@@ -425,7 +434,7 @@ func (s *Service) Signin(ctx context.Context, email, password string, descriptio
 	if userExists {
 		hash = u.Password
 	}
-	if !passwordMatchesHash(password, hash) {
+	if !passwordMatchesHash(ctx, password, hash) {
 		return SigninResult{}, ErrInvalidCredentials
 	}
 	if !userExists {
@@ -665,7 +674,7 @@ func (s *Service) ResetPasswordConfirm(ctx context.Context, token, newPassword s
 		return err
 	}
 
-	passwordHash, err := passwordHash(newPassword)
+	passwordHash, err := passwordHash(ctx, newPassword)
 	if err != nil {
 		return fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -753,7 +762,7 @@ func (s *Service) AdminCreate(ctx context.Context, username, email, password str
 	if err != nil {
 		return User{}, err
 	}
-	passwordHash, err := passwordHash(password)
+	passwordHash, err := passwordHash(ctx, password)
 	if err != nil {
 		return User{}, fmt.Errorf("failed to hash password: %w", err)
 	}
@@ -788,7 +797,7 @@ func (s *Service) DeleteSelf(ctx context.Context, userID uuid.UUID, password str
 		return err
 	}
 
-	if !passwordMatchesHash(password, u.Password) {
+	if !passwordMatchesHash(ctx, password, u.Password) {
 		return ErrInvalidCredentials
 	}
 
@@ -872,7 +881,7 @@ func (s *Service) TokenCreate(ctx context.Context, userID uuid.UUID, password, d
 		return TokenCreateResult{}, err
 	}
 
-	if !passwordMatchesHash(password, u.Password) {
+	if !passwordMatchesHash(ctx, password, u.Password) {
 		return TokenCreateResult{}, ErrInvalidCredentials
 	}
 
